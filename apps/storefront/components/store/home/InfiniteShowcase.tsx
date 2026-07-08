@@ -161,7 +161,7 @@ const PIECES: Piece[] = [
   {
     id: "fg2",
     image:
-      "https://images.unsplash.com/photo-1519750783826-e2420f4d687c?w=520&auto=format&fit=crop&q=80",
+      "https://plus.unsplash.com/premium_photo-1723618952424-e72e62d3119e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mzd8fGNvbG9yJTIwcGVuY2lsJTIwc2V0fGVufDB8fDB8fHww",
     alt: "Coloured pencil set",
     left: "42%", top: "4%",
     w: 148, aspect: "4/3",
