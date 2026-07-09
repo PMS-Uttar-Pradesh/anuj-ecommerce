@@ -33,11 +33,20 @@ export async function createPromotion(data: PromotionPayload) {
   if (!data.title.trim()) {
     return { success: false, error: "Title is required." };
   }
+  if (data.title.trim().length > 150) {
+    return { success: false, error: "Title must be 150 characters or fewer." };
+  }
   if (!data.imageUrl.trim()) {
     return { success: false, error: "Banner image is required." };
   }
+  if (data.imageUrl.trim().length > 500) {
+    return { success: false, error: "Image URL must be 500 characters or fewer." };
+  }
   if (!data.buttonText.trim()) {
     return { success: false, error: "Button text is required." };
+  }
+  if (data.buttonText.trim().length > 50) {
+    return { success: false, error: "Button text must be 50 characters or fewer." };
   }
   if (!data.redirectId) {
     return { success: false, error: "Redirect target selection is required." };
@@ -90,11 +99,20 @@ export async function updatePromotion(id: string, data: PromotionPayload) {
   if (!data.title.trim()) {
     return { success: false, error: "Title is required." };
   }
+  if (data.title.trim().length > 150) {
+    return { success: false, error: "Title must be 150 characters or fewer." };
+  }
   if (!data.imageUrl.trim()) {
     return { success: false, error: "Banner image is required." };
   }
+  if (data.imageUrl.trim().length > 500) {
+    return { success: false, error: "Image URL must be 500 characters or fewer." };
+  }
   if (!data.buttonText.trim()) {
     return { success: false, error: "Button text is required." };
+  }
+  if (data.buttonText.trim().length > 50) {
+    return { success: false, error: "Button text must be 50 characters or fewer." };
   }
   if (!data.redirectId) {
     return { success: false, error: "Redirect target selection is required." };

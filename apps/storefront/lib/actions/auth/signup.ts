@@ -21,14 +21,27 @@ export interface SignUpState {
 // ── Validation ───────────────────────────────────────────────────────
 
 function validateSignUpInput(formData: FormData): string | null {
-  const firstName = formData.get("firstName") as string | null;
-  const lastName = formData.get("lastName") as string | null;
-  const email = formData.get("email") as string | null;
-  const password = formData.get("password") as string | null;
-  const confirmPassword = formData.get("confirmPassword") as string | null;
+  const firstName = (formData.get("firstName") as string | null)?.trim() ?? "";
+  const lastName = (formData.get("lastName") as string | null)?.trim() ?? "";
+  const email = (formData.get("email") as string | null)?.trim() ?? "";
+  const password = (formData.get("password") as string | null)?.trim() ?? "";
+  const confirmPassword = (formData.get("confirmPassword") as string | null)?.trim() ?? "";
 
-  if (!firstName?.trim() || !lastName?.trim() || !email?.trim() || !password || !confirmPassword) {
+  if (!firstName || !lastName || !email || !password || !confirmPassword) {
     return "All fields are required.";
+  }
+
+  if (firstName.length > 50) {
+    return "First name must be at most 50 characters.";
+  }
+  if (lastName.length > 50) {
+    return "Last name must be at most 50 characters.";
+  }
+  if (email.length > 150) {
+    return "Email must be at most 150 characters.";
+  }
+  if (password.length > 100) {
+    return "Password must be at most 100 characters.";
   }
 
   // Basic email format check
@@ -63,7 +76,7 @@ export async function signUp(
   const firstName = (formData.get("firstName") as string).trim();
   const lastName = (formData.get("lastName") as string).trim();
   const email = (formData.get("email") as string).trim().toLowerCase();
-  const password = formData.get("password") as string;
+  const password = (formData.get("password") as string).trim();
 
   // 2. Create Supabase Auth user
   const supabase = await createClient();

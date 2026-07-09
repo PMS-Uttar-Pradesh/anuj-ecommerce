@@ -96,10 +96,17 @@ export async function syncCartAction(items: ZustandCartItem[]): Promise<ZustandC
     // 2. Perform synchronization
     // Upsert items from frontend
     for (const item of items) {
+      if (!item || typeof item.id !== "string" || !item.id.trim()) continue;
+      if (typeof item.quantity !== "number" || !Number.isInteger(item.quantity) || item.quantity <= 0 || item.quantity > 100) {
+        continue;
+      }
+      const productId = item.id.trim();
+      const quantity = item.quantity;
+
       const existingItem = await prisma.cartItem.findFirst({
         where: {
           cartId: cart.id,
-          productId: item.id,
+          productId: productId,
           variantId: null,
         },
       });
@@ -108,16 +115,16 @@ export async function syncCartAction(items: ZustandCartItem[]): Promise<ZustandC
         await prisma.cartItem.update({
           where: { id: existingItem.id },
           data: {
-            quantity: item.quantity,
+            quantity: quantity,
           },
         });
       } else {
         await prisma.cartItem.create({
           data: {
             cartId: cart.id,
-            productId: item.id,
+            productId: productId,
             variantId: null,
-            quantity: item.quantity,
+            quantity: quantity,
           },
         });
       }
@@ -159,20 +166,28 @@ export async function mergeCartAction(guestItems: ZustandCartItem[]): Promise<Zu
 
     // Merge logic
     for (const guestItem of guestItems) {
+      if (!guestItem || typeof guestItem.id !== "string" || !guestItem.id.trim()) continue;
+      if (typeof guestItem.quantity !== "number" || !Number.isInteger(guestItem.quantity) || guestItem.quantity <= 0 || guestItem.quantity > 100) {
+        continue;
+      }
+      const productId = guestItem.id.trim();
+      const quantity = guestItem.quantity;
+
       const existingDbItem = await prisma.cartItem.findFirst({
         where: {
           cartId: cart.id,
-          productId: guestItem.id,
+          productId: productId,
           variantId: null,
         },
       });
 
       if (existingDbItem) {
-        // Combine quantities
+        // Combine quantities, with a safety cap at 100
+        const newQuantity = Math.min(existingDbItem.quantity + quantity, 100);
         await prisma.cartItem.update({
           where: { id: existingDbItem.id },
           data: {
-            quantity: existingDbItem.quantity + guestItem.quantity,
+            quantity: newQuantity,
           },
         });
       } else {
@@ -180,9 +195,9 @@ export async function mergeCartAction(guestItems: ZustandCartItem[]): Promise<Zu
         await prisma.cartItem.create({
           data: {
             cartId: cart.id,
-            productId: guestItem.id,
+            productId: productId,
             variantId: null,
-            quantity: guestItem.quantity,
+            quantity: quantity,
           },
         });
       }

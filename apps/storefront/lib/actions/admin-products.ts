@@ -48,6 +48,28 @@ export async function createProduct(formData: {
 }) {
   const admin = await requireAdmin();
 
+  // --- Input validation ---
+  const name = formData.name?.trim();
+  if (!name) {
+    return { success: false, error: "Product name is required." };
+  }
+  if (name.length > 150) {
+    return { success: false, error: "Product name must be 150 characters or fewer." };
+  }
+  if (!formData.categoryId?.trim()) {
+    return { success: false, error: "Category is required." };
+  }
+  if (!Number.isFinite(formData.price) || formData.price <= 0) {
+    return { success: false, error: "Price must be a positive number." };
+  }
+  if (!Number.isFinite(formData.mrp) || formData.mrp <= 0) {
+    return { success: false, error: "MRP must be a positive number." };
+  }
+  if (!Number.isFinite(formData.stock) || formData.stock < 0) {
+    return { success: false, error: "Stock must be 0 or greater." };
+  }
+  // --- End validation ---
+
   // Validation checks for salePrice
   if (formData.salePrice !== undefined && formData.salePrice !== null) {
     if (formData.salePrice <= 0) {
@@ -152,6 +174,28 @@ export async function updateProduct(
   }
 ) {
   const admin = await requireAdmin();
+
+  // --- Input validation ---
+  const name = formData.name?.trim();
+  if (!name) {
+    return { success: false, error: "Product name is required." };
+  }
+  if (name.length > 150) {
+    return { success: false, error: "Product name must be 150 characters or fewer." };
+  }
+  if (!formData.categoryId?.trim()) {
+    return { success: false, error: "Category is required." };
+  }
+  if (!Number.isFinite(formData.price) || formData.price <= 0) {
+    return { success: false, error: "Price must be a positive number." };
+  }
+  if (!Number.isFinite(formData.mrp) || formData.mrp <= 0) {
+    return { success: false, error: "MRP must be a positive number." };
+  }
+  if (!Number.isFinite(formData.stock) || formData.stock < 0) {
+    return { success: false, error: "Stock must be 0 or greater." };
+  }
+  // --- End validation ---
 
   // Validation checks for salePrice
   if (formData.salePrice !== undefined && formData.salePrice !== null) {
@@ -381,6 +425,12 @@ export async function deleteProduct(id: string) {
 
 export async function updateProductStock(productId: string, newStock: number) {
   const admin = await requireAdmin();
+
+  // --- Input validation ---
+  if (!Number.isFinite(newStock) || newStock < 0) {
+    return { success: false, error: "Stock must be 0 or greater." };
+  }
+  // --- End validation ---
 
   try {
     const product = await prisma.product.findUnique({

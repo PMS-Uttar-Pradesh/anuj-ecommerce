@@ -15,10 +15,16 @@ export async function submitSupportRequest(formData: SupportSubmissionData) {
   if (!formData.name?.trim()) {
     return { success: false, error: "Name is required." };
   }
+  if (formData.name.trim().length > 100) {
+    return { success: false, error: "Name must be 100 characters or fewer." };
+  }
   if (!formData.email?.trim()) {
     return { success: false, error: "Email is required." };
   }
-  
+  if (formData.email.trim().length > 150) {
+    return { success: false, error: "Email must be 150 characters or fewer." };
+  }
+
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(formData.email.trim())) {
     return { success: false, error: "Please enter a valid email address." };
@@ -27,8 +33,14 @@ export async function submitSupportRequest(formData: SupportSubmissionData) {
   if (!formData.subject?.trim()) {
     return { success: false, error: "Subject is required." };
   }
+  if (formData.subject.trim().length > 150) {
+    return { success: false, error: "Subject must be 150 characters or fewer." };
+  }
   if (!formData.message?.trim()) {
     return { success: false, error: "Message is required." };
+  }
+  if (formData.message.trim().length > 3000) {
+    return { success: false, error: "Message must be 3000 characters or fewer." };
   }
 
   try {

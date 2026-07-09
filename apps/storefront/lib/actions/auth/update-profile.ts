@@ -17,16 +17,21 @@ export async function updateProfile(
   prevState: UpdateProfileState,
   formData: FormData
 ): Promise<UpdateProfileState> {
-  const firstName = formData.get("firstName") as string;
-  const lastName = formData.get("lastName") as string;
+  const firstName = (formData.get("firstName") as string | null)?.trim() ?? "";
+  const lastName = (formData.get("lastName") as string | null)?.trim() ?? "";
 
   // Validate
   const errors: { firstName?: string; lastName?: string } = {};
-  if (!firstName || !firstName.trim()) {
+  if (!firstName) {
     errors.firstName = "First name is required.";
+  } else if (firstName.length > 50) {
+    errors.firstName = "First name must be at most 50 characters.";
   }
-  if (!lastName || !lastName.trim()) {
+
+  if (!lastName) {
     errors.lastName = "Last name is required.";
+  } else if (lastName.length > 50) {
+    errors.lastName = "Last name must be at most 50 characters.";
   }
 
   if (Object.keys(errors).length > 0) {

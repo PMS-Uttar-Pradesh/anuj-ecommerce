@@ -11,6 +11,7 @@
 
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import prisma from "@/lib/prisma";
+import { isAdmin } from "@/lib/auth/permission";
 
 /**
  * Extract the display name parts from Supabase user metadata.
@@ -74,6 +75,23 @@ export async function syncUserToPrisma(user: SupabaseUser) {
       );
     }
 
+    // Fetch existing user to determine role
+    const existingUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { role: true },
+    });
+
+    const isUserAdmin = isAdmin(user.email);
+    let resolvedRole: "ADMIN" | "CUSTOMER" = "CUSTOMER";
+
+    if (isUserAdmin) {
+      resolvedRole = "ADMIN";
+    } else if (existingUser) {
+      resolvedRole = existingUser.role;
+    } else if (existingUserByEmail) {
+      resolvedRole = existingUserByEmail.role;
+    }
+
     // 2. Perform standard upsert
     await prisma.user.upsert({
       where: { id: user.id },
@@ -82,11 +100,13 @@ export async function syncUserToPrisma(user: SupabaseUser) {
         email: user.email!,
         firstName,
         lastName,
+        role: resolvedRole,
       },
       update: {
         email: user.email!,
         firstName,
         lastName,
+        role: resolvedRole,
       },
     });
   } catch (error) {

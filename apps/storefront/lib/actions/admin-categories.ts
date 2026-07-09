@@ -36,12 +36,22 @@ export async function createCategory(formData: {
 }) {
   const admin = await requireAdmin();
 
+  // --- Input validation ---
+  const name = formData.name?.trim();
+  if (!name) {
+    return { success: false, error: "Category name is required." };
+  }
+  if (name.length > 100) {
+    return { success: false, error: "Category name must be 100 characters or fewer." };
+  }
+  // --- End validation ---
+
   try {
-    const slug = await getUniqueCategorySlug(formData.name);
+    const slug = await getUniqueCategorySlug(name);
 
     const category = await prisma.category.create({
       data: {
-        name: formData.name,
+        name,
         slug,
         description: formData.description ?? null,
         imageUrl: formData.imageUrl ?? null,
@@ -79,13 +89,23 @@ export async function updateCategory(
 ) {
   const admin = await requireAdmin();
 
+  // --- Input validation ---
+  const name = formData.name?.trim();
+  if (!name) {
+    return { success: false, error: "Category name is required." };
+  }
+  if (name.length > 100) {
+    return { success: false, error: "Category name must be 100 characters or fewer." };
+  }
+  // --- End validation ---
+
   try {
-    const slug = await getUniqueCategorySlug(formData.name, id);
+    const slug = await getUniqueCategorySlug(name, id);
 
     const category = await prisma.category.update({
       where: { id },
       data: {
-        name: formData.name,
+        name,
         slug,
         description: formData.description ?? null,
         imageUrl: formData.imageUrl ?? null,

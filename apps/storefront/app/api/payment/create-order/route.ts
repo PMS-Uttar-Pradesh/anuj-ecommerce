@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     const checkout = await validateCheckout(user.id, deliveryMethod);
 
-    console.log("CHECKOUT RESULT:", checkout);
+    console.log("CHECKOUT RESULT: valid =", checkout.valid, "total =", checkout.total, "errors =", checkout.errors);
 
     if (!checkout.valid) {
       return NextResponse.json(

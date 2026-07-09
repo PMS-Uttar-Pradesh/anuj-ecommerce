@@ -12,6 +12,31 @@ export async function submitReview(formData: {
   title: string;
   comment: string;
 }) {
+  // --- Input validation ---
+  const productId = formData.productId?.trim();
+  if (!productId) {
+    return { success: false, error: "Product ID is required." };
+  }
+  const title = formData.title?.trim();
+  if (!title) {
+    return { success: false, error: "Review title is required." };
+  }
+  if (title.length > 100) {
+    return { success: false, error: "Review title must be 100 characters or fewer." };
+  }
+  const comment = formData.comment?.trim();
+  if (!comment) {
+    return { success: false, error: "Review comment is required." };
+  }
+  if (comment.length > 1000) {
+    return { success: false, error: "Review comment must be 1000 characters or fewer." };
+  }
+  const rating = Number(formData.rating);
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return { success: false, error: "Rating must be a whole number between 1 and 5." };
+  }
+  // --- End validation ---
+
   try {
     const user = await getUser();
     if (!user) {
@@ -25,7 +50,7 @@ export async function submitReview(formData: {
         paymentStatus: "COMPLETED",
         items: {
           some: {
-            productId: formData.productId,
+            productId,
           },
         },
       },
@@ -42,7 +67,7 @@ export async function submitReview(formData: {
     const existing = await prisma.review.findUnique({
       where: {
         productId_userId: {
-          productId: formData.productId,
+          productId,
           userId: user.id,
         },
       },
@@ -58,11 +83,11 @@ export async function submitReview(formData: {
     // 3. Create review
     const review = await prisma.review.create({
       data: {
-        productId: formData.productId,
+        productId,
         userId: user.id,
-        rating: formData.rating,
-        title: formData.title,
-        comment: formData.comment,
+        rating,
+        title,
+        comment,
         status: "PENDING",
       },
       include: {
@@ -211,11 +236,25 @@ export async function updateReviewStatus(reviewId: string, status: ReviewStatus)
 }
 
 export async function replyToReview(reviewId: string, comment: string) {
+  // --- Input validation ---
+  const reviewIdTrimmed = reviewId?.trim();
+  if (!reviewIdTrimmed) {
+    return { success: false, error: "Review ID is required." };
+  }
+  const replyComment = comment?.trim();
+  if (!replyComment) {
+    return { success: false, error: "Reply comment is required." };
+  }
+  if (replyComment.length > 1000) {
+    return { success: false, error: "Reply must be 1000 characters or fewer." };
+  }
+  // --- End validation ---
+
   try {
     const admin = await requireAdmin();
 
     const review = await prisma.review.findUnique({
-      where: { id: reviewId },
+      where: { id: reviewIdTrimmed },
       include: { product: true },
     });
 
@@ -224,14 +263,14 @@ export async function replyToReview(reviewId: string, comment: string) {
     }
 
     await prisma.reviewReply.upsert({
-      where: { reviewId },
+      where: { reviewId: reviewIdTrimmed },
       create: {
-        reviewId,
+        reviewId: reviewIdTrimmed,
         adminId: admin.id,
-        comment,
+        comment: replyComment,
       },
       update: {
-        comment,
+        comment: replyComment,
         adminId: admin.id,
       },
     });
