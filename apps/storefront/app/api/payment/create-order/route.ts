@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { validateCheckout } from "@/lib/checkout/validate-checkout";
 import { generateOrderNumber } from "@/lib/orders/generate-order-number";
 import { razorpay } from "@/lib/razorpay";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,6 +17,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: "Authentication required." },
         { status: 401 },
+      );
+    }
+
+    // Rate limit — 5 create-order calls per user per minute
+    const createOrderRl = checkRateLimit(`create-order:${user.id}`, 5, 60 * 1000);
+    if (!createOrderRl.allowed) {
+      return NextResponse.json(
+        { success: false, error: "Too many payment requests. Please wait before trying again." },
+        { status: 429 },
       );
     }
 

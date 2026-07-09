@@ -11,6 +11,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { syncUserToPrisma } from "@/lib/auth/sync-user";
 import { isValidRedirectPath } from "@/lib/utils";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -50,6 +51,12 @@ export async function login(
 
   if (!isValidRedirectPath(redirectTo)) {
     redirectTo = "/";
+  }
+
+  // 1b. Rate limit — 10 attempts per email per 15-minute window
+  const loginRl = checkRateLimit(`login:${email}`, 10, 15 * 60 * 1000);
+  if (!loginRl.allowed) {
+    return { error: "Too many login attempts. Please wait 15 minutes before trying again." };
   }
 
   // 2. Authenticate

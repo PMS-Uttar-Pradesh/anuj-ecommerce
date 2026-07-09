@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { sendContactAdminEmail, sendContactReceivedEmail } from "@/lib/email/send-email";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export interface SupportSubmissionData {
   name: string;
@@ -41,6 +42,14 @@ export async function submitSupportRequest(formData: SupportSubmissionData) {
   }
   if (formData.message.trim().length > 3000) {
     return { success: false, error: "Message must be 3000 characters or fewer." };
+  }
+
+  // 1b. Rate limit — 5 attempts per email+IP per 1-hour window
+  const ip = await getClientIp();
+  const emailKey = formData.email.trim().toLowerCase();
+  const supportRl = checkRateLimit(`support:${emailKey}:${ip}`, 5, 60 * 60 * 1000);
+  if (!supportRl.allowed) {
+    return { success: false, error: "Too many support requests. Please wait 1 hour before trying again." };
   }
 
   try {

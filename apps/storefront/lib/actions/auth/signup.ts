@@ -10,6 +10,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { syncUserToPrisma } from "@/lib/auth/sync-user";
 import { sendWelcomeEmail } from "@/lib/email";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -77,6 +78,13 @@ export async function signUp(
   const lastName = (formData.get("lastName") as string).trim();
   const email = (formData.get("email") as string).trim().toLowerCase();
   const password = (formData.get("password") as string).trim();
+
+  // 1b. Rate limit — 5 attempts per email+IP per 1-hour window
+  const ip = await getClientIp();
+  const signupRl = checkRateLimit(`signup:${email}:${ip}`, 5, 60 * 60 * 1000);
+  if (!signupRl.allowed) {
+    return { error: "Too many signup attempts. Please wait 1 hour before trying again." };
+  }
 
   // 2. Create Supabase Auth user
   const supabase = await createClient();
