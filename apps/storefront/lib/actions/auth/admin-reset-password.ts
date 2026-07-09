@@ -10,6 +10,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export interface AdminResetPasswordState {
   success?: boolean;
@@ -24,6 +25,12 @@ export async function adminResetPassword(
 
   if (!email) {
     return { error: "Email address is required." };
+  }
+
+  // Rate limit — 3 reset requests per email per hour
+  const resetRl = checkRateLimit(`admin-reset-password:${email}`, 3, 60 * 60 * 1000);
+  if (!resetRl.allowed) {
+    return { error: "Too many password reset requests. Please wait 1 hour before trying again." };
   }
 
   const supabase = await createClient();
