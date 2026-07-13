@@ -2,7 +2,6 @@
 import HeroCarousel from "@/components/store/home/HeroCarousel";
 import TrustBar from "@/components/store/home/TrustBar";
 import CategoryGrid from "@/components/store/home/CategoryGrid";
-import FeaturedBrands from "@/components/store/home/FeaturedBrands";
 import ProductCarousel from "@/components/store/home/ProductCarousel";
 import PromoCards from "@/components/store/home/PromoCards";
 import BudgetSection from "@/components/store/home/BudgetSection";
@@ -84,10 +83,7 @@ export default async function Home() {
         columns={columns}
       />
 
-      {/* 4. Featured Brands Showcase */}
-      <FeaturedBrands />
-
-      {/* 5. Best Sellers Carousel */}
+      {/* 4. Best Sellers Carousel */}
       <ProductCarousel
         title="Best Sellers"
         subtitle="Most loved and highly rated tools from our premium collection."
