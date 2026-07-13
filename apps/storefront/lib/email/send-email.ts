@@ -1,7 +1,7 @@
 import { render } from "@react-email/render";
 import React from "react";
 import prisma from "@/lib/prisma";
-import { resend } from "./resend";
+import { getResendClient } from "./resend";
 import WelcomeEmail from "./templates/welcome-email";
 import OrderConfirmationEmail from "./templates/order-confirmation";
 import OrderStatusEmail from "./templates/order-status";
@@ -29,6 +29,7 @@ async function sendMail({ to, subject, reactElement }: SendMailPayload) {
   }
 
   const from = process.env.EMAIL_FROM || "onboarding@resend.dev";
+  const resend = getResendClient();
 
   if (!resend) {
     console.error("[Email Error] Resend client is not initialized.");

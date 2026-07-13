@@ -1,3 +1,3 @@
 export * from "./send-email";
 export * from "./types";
-export { resend } from "./resend";
+export { getResendClient } from "./resend";
