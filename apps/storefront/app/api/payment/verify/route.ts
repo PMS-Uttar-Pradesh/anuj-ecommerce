@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 import { generateOrderNumber } from "@/lib/orders/generate-order-number";
 import { OrderStatus, PaymentStatus, PaymentMethod } from "@prisma/client";
 import { sendOrderConfirmationEmail } from "@/lib/email";
-import { createOrderFromCart } from "@/lib/actions/checkout";
+import { createOrderFromCart } from "@/lib/orders/create-order";
 import { validateCheckout } from "@/lib/checkout/validate-checkout";
 
 interface VerifyPaymentPayload {
