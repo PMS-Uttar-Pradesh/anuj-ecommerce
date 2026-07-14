@@ -25,7 +25,7 @@ export async function signInWithGoogle(redirectTo: string = "/"): Promise<void> 
   const supabase = await createClient();
 
   const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://anuj-ecommerce-pi.vercel.app";
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",

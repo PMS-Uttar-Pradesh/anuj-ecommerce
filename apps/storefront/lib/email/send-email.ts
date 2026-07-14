@@ -8,7 +8,7 @@ import OrderStatusEmail from "./templates/order-status";
 import ContactAdminEmail from "./templates/contact-admin";
 import ContactReceivedEmail from "./templates/contact-received";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://anuj-ecommerce-pi.vercel.app";
 
 interface SendMailPayload {
   to: string;
