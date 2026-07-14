@@ -180,10 +180,7 @@ export async function createCodOrderAction(deliveryMethod: string = "standard") 
       shippingFee: checkout.shipping,
     });
 
-    // Trigger non-blocking email confirmation sending
-    sendOrderConfirmationEmail({ orderId: order.id }).catch((err) => {
-      console.error("[createCodOrderAction] confirmation email sending failed:", err);
-    });
+    await sendOrderConfirmationEmail({ orderId: order.id });
 
     return {
       success: true,

@@ -64,26 +64,20 @@ export async function submitSupportRequest(formData: SupportSubmissionData) {
       },
     });
 
-    // 3. Trigger non-blocking emails asynchronously
-    // Send admin notification
-    sendContactAdminEmail({
-      name: supportRequest.name,
-      email: supportRequest.email,
-      subject: supportRequest.subject,
-      message: supportRequest.message,
-    }).catch((err) => {
-      console.error("[submitSupportRequest] Failed to send admin email:", err);
-    });
-
-    // Send customer confirmation
-    sendContactReceivedEmail({
-      to: supportRequest.email,
-      name: supportRequest.name,
-      subject: supportRequest.subject,
-      message: supportRequest.message,
-    }).catch((err) => {
-      console.error("[submitSupportRequest] Failed to send customer auto-reply email:", err);
-    });
+    await Promise.all([
+      sendContactAdminEmail({
+        name: supportRequest.name,
+        email: supportRequest.email,
+        subject: supportRequest.subject,
+        message: supportRequest.message,
+      }),
+      sendContactReceivedEmail({
+        to: supportRequest.email,
+        name: supportRequest.name,
+        subject: supportRequest.subject,
+        message: supportRequest.message,
+      }),
+    ]);
 
     return {
       success: true,

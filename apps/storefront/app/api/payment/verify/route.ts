@@ -166,10 +166,7 @@ export async function POST(request: NextRequest) {
     const deliveryMethod = (body as any).deliveryMethod || "standard";
     const order = await createOrderFromVerifiedPayment(user.id, body, deliveryMethod);
 
-    // Non-blocking order confirmation email trigger
-    sendOrderConfirmationEmail({ orderId: order.id }).catch((err) => {
-      console.error("[verify] Order confirmation email sending failed:", err);
-    });
+    await sendOrderConfirmationEmail({ orderId: order.id });
 
     return NextResponse.json({
       success: true,
