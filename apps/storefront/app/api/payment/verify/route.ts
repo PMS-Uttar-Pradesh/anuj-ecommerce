@@ -1,8 +1,7 @@
+export const runtime = "nodejs";
 import { createHmac, timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import prisma from "@/lib/prisma";
-import { generateOrderNumber } from "@/lib/orders/generate-order-number";
 import { OrderStatus, PaymentStatus, PaymentMethod } from "@prisma/client";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 import { createOrderFromCart } from "@/lib/orders/create-order";
