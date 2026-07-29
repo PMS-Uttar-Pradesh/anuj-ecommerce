@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useMemo, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -53,6 +53,7 @@ export default function ProductListClient({
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [stockFilter, setStockFilter] = useState(initialFilter);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
 
   const productsForTab = initialProducts.filter((product) =>
     activeTab === "active" ? !product.isDeleted : product.isDeleted
@@ -73,6 +74,15 @@ export default function ProductListClient({
 
     return matchesSearch && matchesCategory && matchesStock;
   });
+
+  const visibleProductIds = useMemo(
+    () => filteredProducts.map((product) => product.id),
+    [filteredProducts]
+  );
+  const selectedVisibleIds = selectedProductIds.filter((id) => visibleProductIds.includes(id));
+  const hasSelectedVisibleProducts = selectedVisibleIds.length > 0;
+  const allVisibleProductsSelected =
+    visibleProductIds.length > 0 && selectedVisibleIds.length === visibleProductIds.length;
 
   const handleToggleActive = async (id: string, current: boolean) => {
     startTransition(async () => {
@@ -139,6 +149,86 @@ export default function ProductListClient({
     }
   };
 
+  const handleTabChange = (tab: "active" | "deleted") => {
+    setActiveTab(tab);
+    setSelectedProductIds([]);
+  };
+
+  const handleSelectProduct = (id: string, selected: boolean) => {
+    setSelectedProductIds((current) =>
+      selected ? [...current, id] : current.filter((productId) => productId !== id)
+    );
+  };
+
+  const handleSelectAllVisible = (selected: boolean) => {
+    setSelectedProductIds((current) => {
+      if (!selected) {
+        return current.filter((id) => !visibleProductIds.includes(id));
+      }
+
+      return Array.from(new Set([...current, ...visibleProductIds]));
+    });
+  };
+
+  const runBulkAction = (
+    label: string,
+    action: (id: string) => Promise<{ success: boolean; error?: string }>
+  ) => {
+    const productIds = selectedVisibleIds;
+
+    startTransition(async () => {
+      let successCount = 0;
+      const failures: string[] = [];
+
+      for (const id of productIds) {
+        const product = initialProducts.find((item) => item.id === id);
+        const res = await action(id);
+
+        if (res.success) {
+          successCount++;
+        } else {
+          failures.push(`${product?.name ?? id}: ${res.error || "Unknown error"}`);
+        }
+      }
+
+      if (successCount > 0) {
+        setSelectedProductIds([]);
+      }
+
+      router.refresh();
+
+      const summary = [`Successfully ${label}: ${successCount}`, `Failed: ${failures.length}`];
+      if (failures.length > 0) {
+        summary.push("", failures.join("\n"));
+      }
+      alert(summary.join("\n"));
+    });
+  };
+
+  const handleBulkDelete = () => {
+    if (confirm(`Delete ${selectedVisibleIds.length} selected products?`)) {
+      runBulkAction("deleted", deleteProduct);
+    }
+  };
+
+  const handleBulkRestore = () => {
+    if (confirm(`Restore ${selectedVisibleIds.length} selected products?`)) {
+      runBulkAction("restored", restoreProduct);
+    }
+  };
+
+  const handleBulkActiveToggle = (isActive: boolean) => {
+    runBulkAction(isActive ? "activated" : "deactivated", (id) =>
+      toggleProductActive(id, isActive)
+    );
+  };
+
+  const handleBulkFeaturedToggle = (isFeatured: boolean) => {
+    runBulkAction(isFeatured ? "marked as featured" : "removed from featured", (id) =>
+      toggleProductFeatured(id, isFeatured)
+    );
+  };
+
   const formatDeletedDate = (deletedAt: Date | string | null) => {
     if (!deletedAt) return "Not available";
 
@@ -155,7 +245,7 @@ export default function ProductListClient({
         <div className="flex gap-6">
           <button
             type="button"
-            onClick={() => setActiveTab("active")}
+            onClick={() => handleTabChange("active")}
             className={`border-b-2 px-1 pb-3 text-sm font-semibold transition-colors ${
               activeTab === "active"
                 ? "border-red-600 text-red-600"
@@ -166,7 +256,7 @@ export default function ProductListClient({
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab("deleted")}
+            onClick={() => handleTabChange("deleted")}
             className={`border-b-2 px-1 pb-3 text-sm font-semibold transition-colors ${
               activeTab === "deleted"
                 ? "border-red-600 text-red-600"
@@ -228,12 +318,85 @@ export default function ProductListClient({
         </Link>
       </div>
 
+      {hasSelectedVisibleProducts && (
+        <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/30 px-4 py-3">
+          <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+            {selectedVisibleIds.length} selected
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {activeTab === "active" ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleBulkDelete}
+                  disabled={isPending}
+                  className="px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-xs font-semibold transition-colors"
+                >
+                  Delete Selected
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBulkActiveToggle(true)}
+                  disabled={isPending}
+                  className="px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 hover:bg-white dark:hover:bg-zinc-950 text-xs font-semibold transition-colors"
+                >
+                  Activate Selected
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBulkActiveToggle(false)}
+                  disabled={isPending}
+                  className="px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 hover:bg-white dark:hover:bg-zinc-950 text-xs font-semibold transition-colors"
+                >
+                  Deactivate Selected
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBulkFeaturedToggle(true)}
+                  disabled={isPending}
+                  className="px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 hover:bg-white dark:hover:bg-zinc-950 text-xs font-semibold transition-colors"
+                >
+                  Mark as Featured
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBulkFeaturedToggle(false)}
+                  disabled={isPending}
+                  className="px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 hover:bg-white dark:hover:bg-zinc-950 text-xs font-semibold transition-colors"
+                >
+                  Remove Featured
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={handleBulkRestore}
+                disabled={isPending}
+                className="px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-xs font-semibold transition-colors"
+              >
+                Restore Selected
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Table view */}
       <div className="bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/20 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                <th className="px-6 py-4 w-12">
+                  <input
+                    type="checkbox"
+                    checked={allVisibleProductsSelected}
+                    onChange={(e) => handleSelectAllVisible(e.target.checked)}
+                    disabled={filteredProducts.length === 0 || isPending}
+                    className="size-4 rounded border-zinc-300 text-red-600 focus:ring-red-500"
+                    aria-label="Select all visible products"
+                  />
+                </th>
                 <th className="px-6 py-4">Product</th>
                 <th className="px-6 py-4">Category</th>
                 <th className="px-6 py-4">Price</th>
@@ -252,7 +415,7 @@ export default function ProductListClient({
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800 text-sm">
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={activeTab === "active" ? 7 : 6} className="px-6 py-12 text-center text-zinc-400">
+                  <td colSpan={activeTab === "active" ? 8 : 7} className="px-6 py-12 text-center text-zinc-400">
                     No products found matching the criteria.
                   </td>
                 </tr>
@@ -267,6 +430,16 @@ export default function ProductListClient({
                       key={product.id}
                       className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/20 transition-colors"
                     >
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedProductIds.includes(product.id)}
+                          onChange={(e) => handleSelectProduct(product.id, e.target.checked)}
+                          disabled={isPending}
+                          className="size-4 rounded border-zinc-300 text-red-600 focus:ring-red-500"
+                          aria-label={`Select ${product.name}`}
+                        />
+                      </td>
                       <td className="px-6 py-4 flex items-center gap-3">
                         <div className="size-10 bg-zinc-100 dark:bg-zinc-800 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800 flex items-center justify-center shrink-0 relative">
                           {primaryImg ? (
