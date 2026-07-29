@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 import { logActivity } from "@/lib/audit/log-activity";
 import { revalidatePath } from "next/cache";
 import { deleteImage } from "@/lib/cloudinary/upload-image";
+import { Prisma } from "@prisma/client";
 
 // Helper to generate a unique slug
 async function getUniqueSlug(name: string, currentId?: string) {
@@ -397,10 +398,14 @@ export async function deleteProduct(id: string) {
   const admin = await requireAdmin();
 
   try {
-    // Soft delete product by setting active = false
+    // Soft delete product while keeping historical references intact.
     const product = await prisma.product.update({
       where: { id },
-      data: { isActive: false },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        isActive: false,
+      },
     });
 
     // Audit log
@@ -409,7 +414,7 @@ export async function deleteProduct(id: string) {
       action: "PRODUCT_DELETED",
       entityType: "Product",
       entityId: id,
-      metadata: { name: product.name, note: "Soft deleted by setting active to false" },
+      metadata: { name: product.name, note: "Soft deleted by setting isDeleted to true" },
     });
 
     revalidatePath("/admin/products");
@@ -420,6 +425,122 @@ export async function deleteProduct(id: string) {
     const err = error as Error;
     console.error("[deleteProduct] Error:", err);
     return { success: false, error: err.message || "Failed to delete product" };
+  }
+}
+
+export async function restoreProduct(id: string) {
+  const admin = await requireAdmin();
+
+  try {
+    const product = await prisma.product.update({
+      where: { id },
+      data: {
+        isDeleted: false,
+        deletedAt: null,
+      },
+    });
+
+    await logActivity({
+      adminId: admin.id,
+      action: "PRODUCT_RESTORED",
+      entityType: "Product",
+      entityId: id,
+      metadata: { name: product.name },
+    });
+
+    revalidatePath("/admin/products");
+    revalidatePath("/products");
+    revalidatePath(`/products/${product.slug}`);
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("[restoreProduct] Error:", err);
+    return { success: false, error: err.message || "Failed to restore product" };
+  }
+}
+
+export async function permanentlyDeleteProduct(id: string) {
+  const admin = await requireAdmin();
+
+  try {
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: {
+        images: true,
+        _count: {
+          select: {
+            orderItems: true,
+          },
+        },
+      },
+    });
+
+    if (!product) {
+      return { success: false, error: "Product not found." };
+    }
+
+    if (!product.isDeleted) {
+      return {
+        success: false,
+        error: "Only deleted products can be permanently deleted.",
+      };
+    }
+
+    if (product._count.orderItems > 0) {
+      return {
+        success: false,
+        error:
+          "This product is referenced by existing orders and cannot be permanently deleted. Keep it in Deleted Products to preserve order history.",
+      };
+    }
+
+    for (const image of product.images) {
+      if (image.publicId) {
+        try {
+          await deleteImage(image.publicId);
+        } catch (error) {
+          console.error(`Failed to delete asset ${image.publicId} from Cloudinary:`, error);
+        }
+      }
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.productImage.deleteMany({
+        where: { productId: id },
+      });
+
+      await tx.product.delete({
+        where: { id },
+      });
+    });
+
+    await logActivity({
+      adminId: admin.id,
+      action: "PRODUCT_PERMANENTLY_DELETED",
+      entityType: "Product",
+      entityId: id,
+      metadata: { name: product.name },
+    });
+
+    revalidatePath("/admin/products");
+    revalidatePath("/products");
+    revalidatePath(`/products/${product.slug}`);
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: unknown) {
+    console.error("[permanentlyDeleteProduct] Error:", error);
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+      return {
+        success: false,
+        error:
+          "This product is still referenced by orders or related records and cannot be permanently deleted.",
+      };
+    }
+
+    const err = error as Error;
+    return { success: false, error: err.message || "Failed to permanently delete product" };
   }
 }
 

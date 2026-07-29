@@ -4,11 +4,13 @@ import React, { useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Plus, Edit2, Trash2, Check, X, Star, PackageOpen } from "lucide-react";
+import { Search, Plus, Edit2, Trash2, Check, X, Star, PackageOpen, RotateCcw } from "lucide-react";
 import {
   toggleProductActive,
   toggleProductFeatured,
   deleteProduct,
+  restoreProduct,
+  permanentlyDeleteProduct,
 } from "@/lib/actions/admin-products";
 
 interface ProductRow {
@@ -18,6 +20,8 @@ interface ProductRow {
   price: number;
   isActive: boolean;
   isFeatured: boolean;
+  isDeleted: boolean;
+  deletedAt: Date | string | null;
   lowStockThreshold: number;
   category: {
     id: string;
@@ -45,12 +49,17 @@ export default function ProductListClient({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
+  const [activeTab, setActiveTab] = useState<"active" | "deleted">("active");
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [stockFilter, setStockFilter] = useState(initialFilter);
 
+  const productsForTab = initialProducts.filter((product) =>
+    activeTab === "active" ? !product.isDeleted : product.isDeleted
+  );
+
   // Filter products locally
-  const filteredProducts = initialProducts.filter((product) => {
+  const filteredProducts = productsForTab.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(search.toLowerCase()) ||
       product.slug.toLowerCase().includes(search.toLowerCase());
@@ -88,7 +97,7 @@ export default function ProductListClient({
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (confirm(`Are you sure you want to delete ${name}? This will disable the product.`)) {
+    if (confirm(`Are you sure you want to delete ${name}? This will move the product to Deleted Products.`)) {
       startTransition(async () => {
         const res = await deleteProduct(id);
         if (res.success) {
@@ -100,8 +109,75 @@ export default function ProductListClient({
     }
   };
 
+  const handleRestore = async (id: string, name: string) => {
+    if (confirm(`Restore ${name}? It will move back to Active Products.`)) {
+      startTransition(async () => {
+        const res = await restoreProduct(id);
+        if (res.success) {
+          router.refresh();
+        } else {
+          alert(res.error || "Failed to restore product");
+        }
+      });
+    }
+  };
+
+  const handlePermanentDelete = async (id: string, name: string) => {
+    if (
+      confirm(
+        `Permanently delete ${name}? This cannot be undone. Products referenced by existing orders will not be deleted.`
+      )
+    ) {
+      startTransition(async () => {
+        const res = await permanentlyDeleteProduct(id);
+        if (res.success) {
+          router.refresh();
+        } else {
+          alert(res.error || "Failed to permanently delete product");
+        }
+      });
+    }
+  };
+
+  const formatDeletedDate = (deletedAt: Date | string | null) => {
+    if (!deletedAt) return "Not available";
+
+    return new Intl.DateTimeFormat("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).format(new Date(deletedAt));
+  };
+
   return (
     <div className="space-y-6">
+      <div className="border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex gap-6">
+          <button
+            type="button"
+            onClick={() => setActiveTab("active")}
+            className={`border-b-2 px-1 pb-3 text-sm font-semibold transition-colors ${
+              activeTab === "active"
+                ? "border-red-600 text-red-600"
+                : "border-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+            }`}
+          >
+            Active Products
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("deleted")}
+            className={`border-b-2 px-1 pb-3 text-sm font-semibold transition-colors ${
+              activeTab === "deleted"
+                ? "border-red-600 text-red-600"
+                : "border-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+            }`}
+          >
+            Deleted Products
+          </button>
+        </div>
+      </div>
+
       {/* Header controls */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="flex flex-1 flex-wrap gap-3 w-full">
@@ -162,15 +238,21 @@ export default function ProductListClient({
                 <th className="px-6 py-4">Category</th>
                 <th className="px-6 py-4">Price</th>
                 <th className="px-6 py-4">Stock</th>
-                <th className="px-6 py-4 text-center">Active</th>
-                <th className="px-6 py-4 text-center">Featured</th>
+                {activeTab === "active" ? (
+                  <>
+                    <th className="px-6 py-4 text-center">Active</th>
+                    <th className="px-6 py-4 text-center">Featured</th>
+                  </>
+                ) : (
+                  <th className="px-6 py-4">Deleted Date</th>
+                )}
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800 text-sm">
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-zinc-400">
+                  <td colSpan={activeTab === "active" ? 7 : 6} className="px-6 py-12 text-center text-zinc-400">
                     No products found matching the criteria.
                   </td>
                 </tr>
@@ -232,59 +314,90 @@ export default function ProductListClient({
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-center">
-                          <button
-                            onClick={() => handleToggleActive(product.id, product.isActive)}
-                            disabled={isPending}
-                            className={`size-6 rounded-md flex items-center justify-center transition-all ${
-                              product.isActive
-                                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
-                                : "bg-zinc-100 text-zinc-400 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
-                            } hover:scale-105`}
-                          >
-                            {product.isActive ? (
-                              <Check className="size-3.5 stroke-[2.5]" />
-                            ) : (
-                              <X className="size-3.5 stroke-[2.5]" />
-                            )}
-                          </button>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-center">
-                          <button
-                            onClick={() => handleToggleFeatured(product.id, product.isFeatured)}
-                            disabled={isPending}
-                            className={`size-6 rounded-md flex items-center justify-center transition-all ${
-                              product.isFeatured
-                                ? "bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800"
-                                : "bg-zinc-100 text-zinc-400 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
-                            } hover:scale-105`}
-                          >
-                            <Star
-                              className={`size-3.5 stroke-[2.5] ${
-                                product.isFeatured ? "fill-amber-500" : ""
-                              }`}
-                            />
-                          </button>
-                        </div>
-                      </td>
+                      {activeTab === "active" ? (
+                        <>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center justify-center">
+                              <button
+                                onClick={() => handleToggleActive(product.id, product.isActive)}
+                                disabled={isPending}
+                                className={`size-6 rounded-md flex items-center justify-center transition-all ${
+                                  product.isActive
+                                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+                                    : "bg-zinc-100 text-zinc-400 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
+                                } hover:scale-105`}
+                              >
+                                {product.isActive ? (
+                                  <Check className="size-3.5 stroke-[2.5]" />
+                                ) : (
+                                  <X className="size-3.5 stroke-[2.5]" />
+                                )}
+                              </button>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center justify-center">
+                              <button
+                                onClick={() => handleToggleFeatured(product.id, product.isFeatured)}
+                                disabled={isPending}
+                                className={`size-6 rounded-md flex items-center justify-center transition-all ${
+                                  product.isFeatured
+                                    ? "bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800"
+                                    : "bg-zinc-100 text-zinc-400 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
+                                } hover:scale-105`}
+                              >
+                                <Star
+                                  className={`size-3.5 stroke-[2.5] ${
+                                    product.isFeatured ? "fill-amber-500" : ""
+                                  }`}
+                                />
+                              </button>
+                            </div>
+                          </td>
+                        </>
+                      ) : (
+                        <td className="px-6 py-4 text-zinc-600 dark:text-zinc-400">
+                          {formatDeletedDate(product.deletedAt)}
+                        </td>
+                      )}
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Link
-                            href={`/admin/products/${product.id}`}
-                            className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 rounded-md transition-colors"
-                          >
-                            <Edit2 className="size-3.5" />
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(product.id, product.name)}
-                            disabled={isPending}
-                            className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/30 text-zinc-500 hover:text-red-600 dark:hover:text-red-400 rounded-md transition-colors"
-                          >
-                            <Trash2 className="size-3.5" />
-                          </button>
+                          {activeTab === "active" ? (
+                            <>
+                              <Link
+                                href={`/admin/products/${product.id}`}
+                                className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 rounded-md transition-colors"
+                              >
+                                <Edit2 className="size-3.5" />
+                              </Link>
+                              <button
+                                onClick={() => handleDelete(product.id, product.name)}
+                                disabled={isPending}
+                                className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/30 text-zinc-500 hover:text-red-600 dark:hover:text-red-400 rounded-md transition-colors"
+                              >
+                                <Trash2 className="size-3.5" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleRestore(product.id, product.name)}
+                                disabled={isPending}
+                                className="p-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-zinc-500 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-md transition-colors"
+                                title="Restore"
+                              >
+                                <RotateCcw className="size-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handlePermanentDelete(product.id, product.name)}
+                                disabled={isPending}
+                                className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/30 text-zinc-500 hover:text-red-600 dark:hover:text-red-400 rounded-md transition-colors"
+                                title="Permanently delete"
+                              >
+                                <Trash2 className="size-3.5" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
