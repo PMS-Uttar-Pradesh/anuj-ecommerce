@@ -108,12 +108,9 @@ export async function signUp(
   // 3. Sync to Prisma
   if (data.user) {
     await syncUserToPrisma(data.user);
-    // Non-blocking welcome email trigger
-    sendWelcomeEmail({
+    await sendWelcomeEmail({
       email: data.user.email!,
       firstName: firstName,
-    }).catch((err) => {
-      console.error("[signup] Welcome email sending failed:", err);
     });
   }
 

@@ -60,11 +60,9 @@ export async function updateOrderStatus(orderId: string, targetStatus: OrderStat
         targetStatus === OrderStatus.SHIPPED ||
         targetStatus === OrderStatus.DELIVERED)
     ) {
-      sendOrderStatusEmail({
+      await sendOrderStatusEmail({
         orderId,
         status: targetStatus as "PROCESSING" | "SHIPPED" | "DELIVERED",
-      }).catch((err) => {
-        console.error("[admin-orders] Status update email sending failed:", err);
       });
     }
 

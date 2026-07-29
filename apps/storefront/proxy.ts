@@ -30,7 +30,7 @@ function isProtectedRoute(pathname: string): boolean {
 
 // ── Middleware ────────────────────────────────────────────────────────
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // 1. Always refresh the session first
   const response = await updateSession(request);
 

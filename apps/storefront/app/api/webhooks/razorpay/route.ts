@@ -25,7 +25,7 @@
  * ---------------------
  * RAZORPAY_WEBHOOK_SECRET  — from Razorpay Dashboard → Settings → Webhooks
  */
-
+export const runtime = "nodejs";
 import { createHmac, timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";

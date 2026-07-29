@@ -1,14 +1,14 @@
 import { render } from "@react-email/render";
 import React from "react";
 import prisma from "@/lib/prisma";
-import { resend } from "./resend";
+import { getResendClient } from "./resend";
 import WelcomeEmail from "./templates/welcome-email";
 import OrderConfirmationEmail from "./templates/order-confirmation";
 import OrderStatusEmail from "./templates/order-status";
 import ContactAdminEmail from "./templates/contact-admin";
 import ContactReceivedEmail from "./templates/contact-received";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://anuj-ecommerce-pi.vercel.app";
 
 interface SendMailPayload {
   to: string;
@@ -29,6 +29,7 @@ async function sendMail({ to, subject, reactElement }: SendMailPayload) {
   }
 
   const from = process.env.EMAIL_FROM || "onboarding@resend.dev";
+  const resend = getResendClient();
 
   if (!resend) {
     console.error("[Email Error] Resend client is not initialized.");

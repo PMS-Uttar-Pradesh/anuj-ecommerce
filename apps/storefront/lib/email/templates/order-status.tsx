@@ -18,7 +18,7 @@ export const OrderStatusEmail = ({
   orderNumber = "ORD-000000",
   customerName = "Customer",
   status = "PROCESSING",
-  storeUrl = "http://localhost:3000",
+  storeUrl = "https://anuj-ecommerce-pi.vercel.app",
 }: OrderStatusEmailProps) => {
   const getStatusText = () => {
     switch (status) {

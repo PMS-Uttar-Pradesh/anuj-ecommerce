@@ -1,11 +1,10 @@
+export const runtime = "nodejs";
 import { createHmac, timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import prisma from "@/lib/prisma";
-import { generateOrderNumber } from "@/lib/orders/generate-order-number";
 import { OrderStatus, PaymentStatus, PaymentMethod } from "@prisma/client";
 import { sendOrderConfirmationEmail } from "@/lib/email";
-import { createOrderFromCart } from "@/lib/actions/checkout";
+import { createOrderFromCart } from "@/lib/orders/create-order";
 import { validateCheckout } from "@/lib/checkout/validate-checkout";
 
 interface VerifyPaymentPayload {
@@ -167,10 +166,7 @@ export async function POST(request: NextRequest) {
     const deliveryMethod = (body as any).deliveryMethod || "standard";
     const order = await createOrderFromVerifiedPayment(user.id, body, deliveryMethod);
 
-    // Non-blocking order confirmation email trigger
-    sendOrderConfirmationEmail({ orderId: order.id }).catch((err) => {
-      console.error("[verify] Order confirmation email sending failed:", err);
-    });
+    await sendOrderConfirmationEmail({ orderId: order.id });
 
     return NextResponse.json({
       success: true,

@@ -16,7 +16,7 @@ import { WelcomeEmailProps } from "../types";
 
 export const WelcomeEmail = ({
   firstName = "Customer",
-  storeUrl = "http://localhost:3000",
+  storeUrl = "https://anuj-ecommerce-pi.vercel.app",
 }: WelcomeEmailProps) => {
   return (
     <Html>
