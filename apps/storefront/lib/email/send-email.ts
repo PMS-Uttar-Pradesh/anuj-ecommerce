@@ -7,6 +7,7 @@ import OrderConfirmationEmail from "./templates/order-confirmation";
 import OrderStatusEmail from "./templates/order-status";
 import ContactAdminEmail from "./templates/contact-admin";
 import ContactReceivedEmail from "./templates/contact-received";
+import OrderRefundEmail from "./templates/order-refund";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://anuj-ecommerce-pi.vercel.app";
 
@@ -255,3 +256,45 @@ export async function sendContactReceivedEmail(props: {
     return { success: false, error };
   }
 }
+
+/**
+ * Sends a refund confirmation email to the customer.
+ */
+export async function sendOrderRefundEmail(props: { orderId: string }) {
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: props.orderId },
+      include: {
+        user: true,
+      },
+    });
+
+    if (!order) {
+      console.error(`[sendOrderRefundEmail] Order ${props.orderId} not found.`);
+      return { success: false, error: "Order not found" };
+    }
+
+    if (!order.user || !order.user.email) {
+      console.error(`[sendOrderRefundEmail] User email not found for order ${props.orderId}.`);
+      return { success: false, error: "User/Email not found" };
+    }
+
+    const reactElement = React.createElement(OrderRefundEmail, {
+      orderNumber: order.orderNumber,
+      customerName: `${order.user.firstName || ""} ${order.user.lastName || ""}`.trim() || "Customer",
+      refundedAmount: Number(order.refundedAmount ?? 0),
+      refundId: order.refundId ?? "N/A",
+      storeUrl: SITE_URL,
+    });
+
+    return await sendMail({
+      to: order.user.email,
+      subject: `Refund Confirmation - PMS #${order.orderNumber}`,
+      reactElement,
+    });
+  } catch (error) {
+    console.error("[sendOrderRefundEmail] Failed to process refund confirmation email:", error);
+    return { success: false, error };
+  }
+}
+

@@ -9,20 +9,20 @@ datasource db {
 }
 
 model User {
-  id           String             @id
-  email        String             @unique
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
-  firstName    String?
-  lastName     String?
-  role         UserRole           @default(CUSTOMER)
-  addresses    Address[]
-  cart         Cart?
-  orders       Order[]
-  wishlist     Wishlist?
-  activityLogs AdminActivityLog[]
-  reviews      Review[]
+  id            String             @id
+  email         String             @unique
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  firstName     String?
+  lastName      String?
+  role          UserRole           @default(CUSTOMER)
+  addresses     Address[]
+  activityLogs  AdminActivityLog[]
+  cart          Cart?
+  orders        Order[]
+  reviews       Review[]
   reviewReplies ReviewReply[]
+  wishlist      Wishlist?
 }
 
 model Address {
@@ -43,10 +43,10 @@ model Category {
   id          String    @id @default(cuid())
   name        String
   slug        String    @unique
-  description String?
-  imageUrl    String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  description String?
+  imageUrl    String?
   products    Product[]
 
   @@index([slug])
@@ -59,25 +59,28 @@ model Product {
   description       String?
   price             Float
   mrp               Float
-  salePrice         Float?
   isActive          Boolean          @default(true)
   isFeatured        Boolean          @default(false)
   categoryId        String
-  lowStockThreshold Int              @default(10)
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
-  brandName         String?
+  lowStockThreshold Int              @default(10)
   brandDescription  String?
+  brandName         String?
   specifications    Json?            @default("{}")
+  salePrice         Float?
+  isDeleted         Boolean          @default(false)
+  deletedAt         DateTime?
   cartItems         CartItem[]
   orderItems        OrderItem[]
   category          Category         @relation(fields: [categoryId], references: [id])
   images            ProductImage[]
   variants          ProductVariant[]
-  wishlistItems     WishlistItem[]
   reviews           Review[]
+  wishlistItems     WishlistItem[]
 
   @@index([slug])
+  @@index([isDeleted])
 }
 
 model ProductImage {
@@ -85,9 +88,9 @@ model ProductImage {
   productId String
   url       String
   alt       String?
+  isPrimary Boolean @default(false)
   publicId  String?
   sortOrder Int     @default(0)
-  isPrimary Boolean @default(false)
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
@@ -153,18 +156,23 @@ model WishlistItem {
 model Order {
   id                String        @id @default(cuid())
   userId            String
-  orderNumber       String        @unique
   status            OrderStatus   @default(PENDING)
   paymentStatus     PaymentStatus @default(PENDING)
-  paymentMethod     PaymentMethod @default(ONLINE)
-  subtotal          Float         @default(0)
-  shippingFee       Float         @default(0)
-  discountAmount    Float         @default(0)
   totalAmount       Float
   razorpayOrderId   String?       @unique
-  razorpayPaymentId String?       @unique
+  refundStatus      RefundStatus  @default(NOT_REQUIRED)
+  refundId          String?       @unique
+  refundedAt        DateTime?
+  refundedAmount    Decimal?      @db.Decimal(10, 2)
+  refundError       String?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
+  orderNumber       String        @unique
+  razorpayPaymentId String?       @unique
+  paymentMethod     PaymentMethod @default(ONLINE)
+  discountAmount    Float         @default(0)
+  shippingFee       Float         @default(0)
+  subtotal          Float         @default(0)
   user              User          @relation(fields: [userId], references: [id])
   items             OrderItem[]
 
@@ -183,41 +191,15 @@ model OrderItem {
   variant   ProductVariant? @relation(fields: [variantId], references: [id])
 }
 
-enum OrderStatus {
-  PENDING
-  PROCESSING
-  SHIPPED
-  DELIVERED
-  CANCELLED
-}
-
-enum PaymentStatus {
-  PENDING
-  COMPLETED
-  FAILED
-  REFUNDED
-}
-
-enum UserRole {
-  CUSTOMER
-  ADMIN
-}
-
 model AdminActivityLog {
-  id          String   @id @default(cuid())
-  adminId     String
-  admin       User     @relation(fields: [adminId], references: [id])
-  action      String
-  entityType  String
-  entityId    String
-  metadata    Json?
-  createdAt   DateTime @default(now())
-}
-
-enum ReviewStatus {
-  PENDING
-  APPROVED
-  REJECTED
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  admin      User     @relation(fields: [adminId], references: [id])
 }
 
 model Review {
@@ -230,10 +212,9 @@ model Review {
   status    ReviewStatus @default(PENDING)
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
-
-  product Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
-  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reply   ReviewReply?
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reply     ReviewReply?
 
   @@unique([productId, userId])
   @@index([productId])
@@ -247,9 +228,8 @@ model ReviewReply {
   comment   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  admin  User   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  admin     User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
 
   @@index([reviewId])
   @@index([adminId])
@@ -266,6 +246,58 @@ model SupportRequest {
   updatedAt DateTime             @updatedAt
 }
 
+model Promotion {
+  id           String              @id @default(cuid())
+  title        String
+  subtitle     String?
+  description  String?
+  imageUrl     String
+  buttonText   String
+  redirectType PromotionTargetType
+  redirectId   String
+  isActive     Boolean             @default(true)
+  isDeleted    Boolean             @default(false)
+  startDate    DateTime
+  endDate      DateTime
+  displayOrder Int                 @default(0)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum RefundStatus {
+  NOT_REQUIRED
+  PENDING
+  PROCESSING
+  REFUNDED
+  FAILED
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum SupportRequestStatus {
   OPEN
   IN_PROGRESS
@@ -278,27 +310,7 @@ enum PromotionTargetType {
   CATEGORY
 }
 
-model Promotion {
-  id            String              @id @default(cuid())
-  title         String
-  subtitle      String?
-  description   String?
-  imageUrl      String
-  buttonText    String
-  redirectType  PromotionTargetType
-  redirectId    String
-  isActive      Boolean             @default(true)
-  isDeleted     Boolean             @default(false)
-  startDate     DateTime
-  endDate       DateTime
-  displayOrder  Int                 @default(0)
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-}
-
 enum PaymentMethod {
   ONLINE
   COD
 }
-
-

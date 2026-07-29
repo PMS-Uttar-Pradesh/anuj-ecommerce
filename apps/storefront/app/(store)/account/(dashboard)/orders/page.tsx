@@ -164,10 +164,26 @@ export default async function OrdersPage() {
                     <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border ${
                       order.paymentStatus === "COMPLETED"
                         ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-900/30"
+                        : order.paymentStatus === "REFUNDED"
+                        ? "bg-teal-50 text-teal-700 dark:bg-teal-950/20 dark:text-teal-400 border-teal-200/50 dark:border-teal-900/30"
                         : "bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-400 border-amber-200/50 dark:border-amber-900/30"
                     }`}>
                       {order.paymentStatus}
                     </span>
+                    {/* Refund Status Badge */}
+                    {order.refundStatus !== "NOT_REQUIRED" && (
+                      <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border ${
+                        order.refundStatus === "REFUNDED"
+                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-900/30"
+                          : order.refundStatus === "FAILED"
+                          ? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400 border-red-200/50 dark:border-red-900/30"
+                          : order.refundStatus === "PROCESSING"
+                          ? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30"
+                          : "bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-400 border-amber-200/50 dark:border-amber-900/30"
+                      }`}>
+                        Refund: {order.refundStatus === "REFUNDED" ? "Completed" : order.refundStatus === "PENDING" ? "Pending" : order.refundStatus === "PROCESSING" ? "Processing" : "Failed"}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-4">

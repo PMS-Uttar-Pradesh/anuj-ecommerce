@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-quer
 import { getOrdersForDashboard } from "@/lib/actions/admin-orders";
 import { Eye, Search, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus, RefundStatus } from "@prisma/client";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,6 +23,7 @@ interface OrderRow {
   paymentStatus: string;
   paymentMethod: string;
   status: OrderStatus;
+  refundStatus: RefundStatus;
   createdAt: Date | string;
   user: {
     id: string;
@@ -55,7 +56,7 @@ function OrdersTable({ initialOrders }: OrdersTableClientProps) {
   });
 
   // Unique list of statuses
-  const tabs = ["ALL", "PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"];
+  const tabs = ["ALL", "PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"];
 
   // Filter orders
   const filteredOrders = orders.filter((order) => {
@@ -68,7 +69,9 @@ function OrdersTable({ initialOrders }: OrdersTableClientProps) {
       order.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
       customerName.includes(search.toLowerCase());
 
-    const matchesTab = activeTab === "ALL" || order.status === activeTab;
+    const matchesTab =
+      activeTab === "ALL" ||
+      (activeTab === "REFUNDED" ? order.paymentStatus === "REFUNDED" : order.status === activeTab);
 
     return matchesSearch && matchesTab;
   });
@@ -121,13 +124,14 @@ function OrdersTable({ initialOrders }: OrdersTableClientProps) {
                 <th className="px-6 py-4">Method</th>
                 <th className="px-6 py-4">Payment</th>
                 <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Refund</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800 text-sm">
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-zinc-400">
+                  <td colSpan={9} className="px-6 py-12 text-center text-zinc-400">
                     <div className="flex flex-col items-center gap-2 justify-center py-6">
                       <ShoppingBag className="size-8 stroke-[1.5] text-zinc-300" />
                       <p className="text-sm font-medium">No orders yet — they&apos;ll show up here the moment a customer checks out</p>
@@ -205,6 +209,25 @@ function OrdersTable({ initialOrders }: OrdersTableClientProps) {
                         >
                           {order.status}
                         </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {order.refundStatus !== "NOT_REQUIRED" ? (
+                          <span
+                            className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
+                              order.refundStatus === "REFUNDED"
+                                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-450 border-emerald-200 dark:border-emerald-900/30"
+                                : order.refundStatus === "FAILED"
+                                ? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-450 border-red-200 dark:border-red-900/30"
+                                : order.refundStatus === "PROCESSING"
+                                ? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-450 border-blue-200 dark:border-blue-900/30"
+                                : "bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-450 border-amber-200 dark:border-amber-900/30"
+                            }`}
+                          >
+                            {order.refundStatus}
+                          </span>
+                        ) : (
+                          <span className="text-zinc-300 dark:text-zinc-600 text-xs">—</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <Link

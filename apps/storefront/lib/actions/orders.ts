@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { getUser } from "@/lib/auth/get-user";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus, RefundStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 export async function cancelOrderAction(orderId: string): Promise<{ success: boolean; error?: string }> {
@@ -42,10 +42,13 @@ export async function cancelOrderAction(orderId: string): Promise<{ success: boo
 
       // 5. Update order status to CANCELLED
       // Keep existing paymentStatus and all Razorpay info intact.
+      // If payment was completed online, set refundStatus to PENDING.
+      const isOnlinePaid = order.paymentMethod === "ONLINE" && order.paymentStatus === "COMPLETED";
       await tx.order.update({
         where: { id: orderId },
         data: {
           status: OrderStatus.CANCELLED,
+          refundStatus: isOnlinePaid ? RefundStatus.PENDING : RefundStatus.NOT_REQUIRED,
         },
       });
 
