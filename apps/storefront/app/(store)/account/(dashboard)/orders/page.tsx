@@ -9,6 +9,8 @@ import prisma from "@/lib/prisma";
 import { Package, ShoppingBag, ArrowRight, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { PLACEHOLDER_IMAGE } from "@/lib/utils";
+import CancelOrderButton from "@/components/store/orders/CancelOrderButton";
+
 
 export const metadata = {
   title: "My Orders — Personal Marketing Store",
@@ -172,9 +174,10 @@ export default async function OrdersPage() {
                     <span className="text-xs text-[var(--ag-gray-500)] font-bold">
                       Total ({order.items.length} item{order.items.length > 1 ? "s" : ""}):
                     </span>
-                    <span className="text-base font-black text-[var(--ag-red)]">
+                    <span className="text-base font-black text-[var(--ag-red)] mr-2">
                       ₹{order.totalAmount.toLocaleString("en-IN")}
                     </span>
+                    <CancelOrderButton orderId={order.id} orderStatus={order.status} />
                   </div>
                 </div>
               </div>

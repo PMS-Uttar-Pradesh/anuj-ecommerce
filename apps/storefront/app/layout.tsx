@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Personal Marketing Store — Pens, Stationery & Art Supplies",
@@ -39,7 +40,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-200">
         {children}
+        <Toaster />
       </body>
     </html>
   );
 }
+
