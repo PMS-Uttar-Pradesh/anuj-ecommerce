@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { getUser } from "@/lib/auth/get-user";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import { revalidateTag } from "next/cache";
 import { unstable_cache } from "next/cache";
 
@@ -21,10 +21,9 @@ export const getStoreSettings = unstable_cache(
 
 export async function updateStoreSettings(data: { freeDeliveryThreshold: number }) {
   try {
-    const user = await getUser();
-    if (!user || user.role !== "ADMIN") {
-      return { success: false, error: "Unauthorized access." };
-    }
+    // requireAdmin() fetches the Prisma user and checks role === "ADMIN".
+    // Redirects (throws) if unauthenticated or not an admin.
+    await requireAdmin();
 
     if (
       typeof data.freeDeliveryThreshold !== "number" ||
