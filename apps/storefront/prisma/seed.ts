@@ -5,6 +5,17 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Starting seed process...");
 
+  // 0. Store Settings — singleton row for global configuration
+  await prisma.storeSettings.upsert({
+    where: { id: "default" },
+    update: {}, // never overwrite an admin-configured value on re-seed
+    create: {
+      id: "default",
+      freeDeliveryThreshold: 999,
+    },
+  });
+  console.log("StoreSettings seeded.");
+
   // 1. Categories
   const categories = [
     { name: "Pens", slug: "pens" },

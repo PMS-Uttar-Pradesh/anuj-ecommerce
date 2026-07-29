@@ -7,16 +7,13 @@ import { unstable_cache } from "next/cache";
 
 export const getStoreSettings = unstable_cache(
   async () => {
-    // upsert guarantees the "default" row always exists.
-    // On first call it creates it; every subsequent call is a no-op update.
-    return prisma.storeSettings.upsert({
+    // Read-only: never writes. Returns the persisted row or an in-memory
+    // default if the seed hasn't run yet. This is safe to call concurrently
+    // during Vercel static generation without causing P2002 constraint errors.
+    const settings = await prisma.storeSettings.findUnique({
       where: { id: "default" },
-      update: {},
-      create: {
-        id: "default",
-        freeDeliveryThreshold: 999,
-      },
     });
+    return settings ?? { id: "default", freeDeliveryThreshold: 999, updatedAt: new Date() };
   },
   ["store-settings"],
   { tags: ["store-settings"] }
