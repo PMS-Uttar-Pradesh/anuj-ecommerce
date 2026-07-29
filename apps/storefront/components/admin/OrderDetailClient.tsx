@@ -7,6 +7,7 @@ import { ArrowLeft, User, MapPin, CreditCard, ShoppingBag, Loader2, ArrowRight, 
 import { updateOrderStatus } from "@/lib/actions/admin-orders";
 import { processOrderRefundAction } from "@/lib/actions/refund";
 import { OrderStatus, RefundStatus } from "@prisma/client";
+import AdminRefreshButton from "@/components/admin/AdminRefreshButton";
 
 interface OrderItem {
   id: string;
@@ -193,35 +194,38 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
           </div>
         </div>
 
-        {/* Transition Status Form */}
-        {transitions.length > 0 && (
-          <form onSubmit={handleStatusChange} className="flex items-center gap-3 bg-white dark:bg-zinc-950 p-3 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm">
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value as OrderStatus)}
-              className="px-3 py-1.5 border border-zinc-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-950 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-red-500"
-            >
-              <option value={order.status}>No Change</option>
-              {transitions.map((t) => (
-                <option key={t} value={t}>
-                  Transition to {t}
-                </option>
-              ))}
-            </select>
-            <button
-              type="submit"
-              disabled={isPending || status === order.status}
-              className="flex items-center gap-1 bg-red-600 hover:bg-red-700 disabled:bg-zinc-100 dark:disabled:bg-zinc-900 text-white disabled:text-zinc-400 font-bold px-3 py-1.5 rounded-lg text-xs transition-colors cursor-pointer"
-            >
-              {isPending ? (
-                <Loader2 className="size-3 animate-spin" />
-              ) : (
-                <ArrowRight className="size-3" />
-              )}
-              <span>Update Status</span>
-            </button>
-          </form>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Transition Status Form */}
+          {transitions.length > 0 && (
+            <form onSubmit={handleStatusChange} className="flex items-center gap-3 bg-white dark:bg-zinc-950 p-3 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm">
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as OrderStatus)}
+                className="px-3 py-1.5 border border-zinc-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-950 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-red-500"
+              >
+                <option value={order.status}>No Change</option>
+                {transitions.map((t) => (
+                  <option key={t} value={t}>
+                    Transition to {t}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="submit"
+                disabled={isPending || status === order.status}
+                className="flex items-center gap-1 bg-red-600 hover:bg-red-700 disabled:bg-zinc-100 dark:disabled:bg-zinc-900 text-white disabled:text-zinc-400 font-bold px-3 py-1.5 rounded-lg text-xs transition-colors cursor-pointer"
+              >
+                {isPending ? (
+                  <Loader2 className="size-3 animate-spin" />
+                ) : (
+                  <ArrowRight className="size-3" />
+                )}
+                <span>Update Status</span>
+              </button>
+            </form>
+          )}
+          <AdminRefreshButton />
+        </div>
       </div>
 
       {error && (

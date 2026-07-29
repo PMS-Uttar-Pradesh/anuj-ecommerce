@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { createCategory, updateCategory } from "@/lib/actions/admin-categories";
+import AdminRefreshButton from "@/components/admin/AdminRefreshButton";
 
 interface CategoryFormProps {
   initialData?: {
@@ -56,21 +57,24 @@ export default function CategoryFormClient({ initialData }: CategoryFormProps) {
   return (
     <div className="space-y-6 max-w-2xl">
       {/* Header breadcrumb */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/admin/categories"
-          className="p-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-150 transition-colors shadow-sm"
-        >
-          <ArrowLeft className="size-4" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold font-display text-zinc-900 dark:text-zinc-50">
-            {initialData ? "Edit Category" : "Add New Category"}
-          </h1>
-          <p className="text-sm text-zinc-500">
-            {initialData ? "Modify existing category name and description" : "Create a new catalog category for grouping products"}
-          </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/admin/categories"
+            className="p-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-150 transition-colors shadow-sm"
+          >
+            <ArrowLeft className="size-4" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold font-display text-zinc-900 dark:text-zinc-50">
+              {initialData ? "Edit Category" : "Add New Category"}
+            </h1>
+            <p className="text-sm text-zinc-500">
+              {initialData ? "Modify existing category name and description" : "Create a new catalog category for grouping products"}
+            </p>
+          </div>
         </div>
+        <AdminRefreshButton />
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

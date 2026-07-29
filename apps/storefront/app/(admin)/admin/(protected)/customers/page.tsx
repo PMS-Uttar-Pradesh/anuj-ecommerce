@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import CustomersTableClient from "@/components/admin/CustomersTableClient";
+import AdminRefreshButton from "@/components/admin/AdminRefreshButton";
 
 export const dynamic = "force-dynamic";
 
@@ -28,13 +29,16 @@ export default async function CustomersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold font-display text-zinc-900 dark:text-zinc-50">
-          Customer Insights
-        </h1>
-        <p className="text-sm text-zinc-500">
-          Analyze customer lifetime values, buying patterns, and manage client profiles
-        </p>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold font-display text-zinc-900 dark:text-zinc-50">
+            Customer Insights
+          </h1>
+          <p className="text-sm text-zinc-500">
+            Analyze customer lifetime values, buying patterns, and manage client profiles
+          </p>
+        </div>
+        <AdminRefreshButton />
       </div>
 
       <CustomersTableClient initialCustomers={customers as unknown as Parameters<typeof CustomersTableClient>[0]["initialCustomers"]} />

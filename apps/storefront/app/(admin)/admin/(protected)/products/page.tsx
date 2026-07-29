@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import ProductListClient from "@/components/admin/ProductListClient";
+import AdminRefreshButton from "@/components/admin/AdminRefreshButton";
 
 export const dynamic = "force-dynamic";
 
@@ -37,13 +38,16 @@ export default async function ProductsPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold font-display text-zinc-900 dark:text-zinc-50">
-          Products Management
-        </h1>
-        <p className="text-sm text-zinc-500">
-          Create, edit, toggle active status, and track inventory for all products
-        </p>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold font-display text-zinc-900 dark:text-zinc-50">
+            Products Management
+          </h1>
+          <p className="text-sm text-zinc-500">
+            Create, edit, toggle active status, and track inventory for all products
+          </p>
+        </div>
+        <AdminRefreshButton />
       </div>
 
       <ProductListClient

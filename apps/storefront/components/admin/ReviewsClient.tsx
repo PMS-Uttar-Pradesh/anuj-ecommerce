@@ -6,6 +6,7 @@ import { Star, MessageSquare, Check, X, ShieldAlert, CornerDownRight, Loader2, L
 import Link from "next/link";
 import { updateReviewStatus, replyToReview } from "@/lib/actions/reviews";
 import { ReviewStatus } from "@prisma/client";
+import AdminRefreshButton from "@/components/admin/AdminRefreshButton";
 
 interface ReviewItem {
   id: string;
@@ -87,13 +88,16 @@ export default function ReviewsClient({ initialReviews, counts }: ReviewsClientP
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold font-display text-zinc-900 dark:text-zinc-50">
-          Product Reviews Moderation
-        </h1>
-        <p className="text-sm text-zinc-500 mt-1">
-          Moderate customer reviews and submit official admin responses. Only approved reviews appear publicly.
-        </p>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold font-display text-zinc-900 dark:text-zinc-50">
+            Product Reviews Moderation
+          </h1>
+          <p className="text-sm text-zinc-500 mt-1">
+            Moderate customer reviews and submit official admin responses. Only approved reviews appear publicly.
+          </p>
+        </div>
+        <AdminRefreshButton />
       </div>
 
       {actionError && (

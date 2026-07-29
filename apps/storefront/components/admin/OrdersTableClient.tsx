@@ -2,11 +2,12 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getOrdersForDashboard } from "@/lib/actions/admin-orders";
 import { Eye, Search, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { OrderStatus, RefundStatus } from "@prisma/client";
+import AdminRefreshButton from "@/components/admin/AdminRefreshButton";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,6 +39,7 @@ interface OrdersTableClientProps {
 }
 
 function OrdersTable({ initialOrders }: OrdersTableClientProps) {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<string>("ALL");
   const [search, setSearch] = useState<string>("");
 
@@ -78,6 +80,20 @@ function OrdersTable({ initialOrders }: OrdersTableClientProps) {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold font-display text-zinc-900 dark:text-zinc-50">
+            Orders Management
+          </h1>
+          <p className="text-sm text-zinc-500">
+            Monitor incoming customer orders, manage statuses, and track payment conditions
+          </p>
+        </div>
+        <AdminRefreshButton
+          onRefresh={() => queryClient.invalidateQueries({ queryKey: ["admin-orders"] })}
+        />
+      </div>
+
       {/* Tabs and search bar */}
       <div className="flex flex-col gap-4">
         {/* Status Tabs */}

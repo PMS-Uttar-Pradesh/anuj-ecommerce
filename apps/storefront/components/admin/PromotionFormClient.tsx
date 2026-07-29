@@ -6,6 +6,7 @@ import { ArrowLeft, Save, Loader2, Upload, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { createPromotion, updatePromotion } from "@/lib/actions/admin-promotions";
 import { PromotionTargetType } from "@prisma/client";
+import AdminRefreshButton from "@/components/admin/AdminRefreshButton";
 
 interface SimpleEntity {
   id: string;
@@ -156,21 +157,24 @@ export default function PromotionFormClient({ products, categories, initialData 
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Header breadcrumb */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/admin/promotions"
-          className="p-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-150 transition-colors shadow-sm"
-        >
-          <ArrowLeft className="size-4" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold font-display text-zinc-900 dark:text-zinc-50">
-            {initialData ? "Edit Promotion" : "Add New Promotion"}
-          </h1>
-          <p className="text-sm text-zinc-500">
-            {initialData ? "Modify promotional banner content and schedules" : "Create a new homepage promotional slide banner"}
-          </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/admin/promotions"
+            className="p-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-150 transition-colors shadow-sm"
+          >
+            <ArrowLeft className="size-4" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold font-display text-zinc-900 dark:text-zinc-50">
+              {initialData ? "Edit Promotion" : "Add New Promotion"}
+            </h1>
+            <p className="text-sm text-zinc-500">
+              {initialData ? "Modify promotional banner content and schedules" : "Create a new homepage promotional slide banner"}
+            </p>
+          </div>
         </div>
+        <AdminRefreshButton />
       </div>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">

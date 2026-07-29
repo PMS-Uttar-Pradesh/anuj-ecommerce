@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { ArrowUpRight, ArrowDownRight, PackageOpen, AlertTriangle } from "lucide-react";
 import RevenueChart from "@/components/admin/RevenueChart";
+import AdminRefreshButton from "@/components/admin/AdminRefreshButton";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -169,6 +170,7 @@ export default async function DashboardPage() {
             Real-time business performance metrics and insights
           </p>
         </div>
+        <AdminRefreshButton />
       </div>
 
       {/* 4 Stat Cards */}

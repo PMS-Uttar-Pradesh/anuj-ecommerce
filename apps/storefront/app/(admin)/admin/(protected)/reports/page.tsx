@@ -3,6 +3,7 @@ import ReportsFilterClient from "@/components/admin/ReportsFilterClient";
 import ReportsChartClient from "@/components/admin/ReportsChartClient";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { ArrowUpRight, ShoppingBag, CreditCard, Box, TrendingUp } from "lucide-react";
+import AdminRefreshButton from "@/components/admin/AdminRefreshButton";
 
 export const dynamic = "force-dynamic";
 
@@ -151,13 +152,16 @@ export default async function ReportsPage({ searchParams }: PageProps) {
   return (
     <div className="space-y-8 animate-scaleIn">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold font-display text-zinc-900 dark:text-zinc-50">
-          Financial & Sales Reports
-        </h1>
-        <p className="text-sm text-zinc-500">
-          Comprehensive business analytics, top products performance, and sales breakdown
-        </p>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold font-display text-zinc-900 dark:text-zinc-50">
+            Financial & Sales Reports
+          </h1>
+          <p className="text-sm text-zinc-500">
+            Comprehensive business analytics, top products performance, and sales breakdown
+          </p>
+        </div>
+        <AdminRefreshButton />
       </div>
 
       {/* Date filter selector client component */}

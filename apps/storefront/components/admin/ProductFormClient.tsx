@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Sparkles, Loader2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { createProduct, updateProduct } from "@/lib/actions/admin-products";
+import AdminRefreshButton from "@/components/admin/AdminRefreshButton";
 
 // High quality stationery presets from Unsplash to wow the user
 const IMAGE_PRESETS = [
@@ -138,21 +139,24 @@ export default function ProductFormClient({ categories, initialData }: ProductFo
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Header breadcrumb */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/admin/products"
-          className="p-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-150 transition-colors shadow-sm"
-        >
-          <ArrowLeft className="size-4" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold font-display text-zinc-900 dark:text-zinc-50">
-            {initialData ? "Edit Product" : "Add New Product"}
-          </h1>
-          <p className="text-sm text-zinc-500">
-            {initialData ? "Modify existing product attributes and stock levels" : "Create a new product listing in your catalog"}
-          </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/admin/products"
+            className="p-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-150 transition-colors shadow-sm"
+          >
+            <ArrowLeft className="size-4" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold font-display text-zinc-900 dark:text-zinc-50">
+              {initialData ? "Edit Product" : "Add New Product"}
+            </h1>
+            <p className="text-sm text-zinc-500">
+              {initialData ? "Modify existing product attributes and stock levels" : "Create a new product listing in your catalog"}
+            </p>
+          </div>
         </div>
+        <AdminRefreshButton />
       </div>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">

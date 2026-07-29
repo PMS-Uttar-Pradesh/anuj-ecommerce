@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { ArrowLeft, Mail, MapPin, Calendar, ShoppingBag, ExternalLink, User } from "lucide-react";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
+import AdminRefreshButton from "@/components/admin/AdminRefreshButton";
 
 interface Address {
   id: string;
@@ -61,21 +62,24 @@ export default function CustomerDetailClient({ customer }: CustomerDetailClientP
   return (
     <div className="space-y-8 animate-scaleIn">
       {/* Header and Back Button */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/admin/customers"
-          className="p-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-150 transition-colors shadow-sm"
-        >
-          <ArrowLeft className="size-4" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold font-display text-zinc-900 dark:text-zinc-50">
-            Customer Profile
-          </h1>
-          <p className="text-sm text-zinc-500">
-            View detailed stats and buying history for {customerName}
-          </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/admin/customers"
+            className="p-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-150 transition-colors shadow-sm"
+          >
+            <ArrowLeft className="size-4" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold font-display text-zinc-900 dark:text-zinc-50">
+              Customer Profile
+            </h1>
+            <p className="text-sm text-zinc-500">
+              View detailed stats and buying history for {customerName}
+            </p>
+          </div>
         </div>
+        <AdminRefreshButton />
       </div>
 
       {/* Grid: Profile Summary & Stats */}
