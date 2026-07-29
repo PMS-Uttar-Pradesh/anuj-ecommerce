@@ -21,6 +21,7 @@ import { useCartStore } from "@/lib/store/cart-store";
 import { useCheckoutStore, CheckoutStep } from "@/lib/store/checkout-store";
 import { hasDefaultAddressAction } from "@/lib/actions/address";
 import { getCheckoutDetails, createCodOrderAction } from "@/lib/actions/checkout";
+import { getStoreSettings } from "@/lib/actions/settings";
 
 interface RazorpayPaymentResponse {
   razorpay_payment_id: string;
@@ -109,6 +110,7 @@ export default function CheckoutPage() {
   );
   const [discountAmount, setDiscountAmount] = useState(0);
   const [offers, setOffers] = useState<{ id: string; title: string; description: string }[]>([]);
+  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState(999);
   const [loading, setLoading] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(
     () => typeof window !== "undefined" && Boolean(window.Razorpay),
@@ -127,6 +129,9 @@ export default function CheckoutPage() {
           setDiscountAmount(res.discountAmount);
           setOffers(res.offers);
         }
+      });
+      getStoreSettings().then((settings) => {
+        setFreeDeliveryThreshold(settings.freeDeliveryThreshold);
       });
     }
   }, [cartItems]);
@@ -205,7 +210,7 @@ export default function CheckoutPage() {
 
   // Shipping logic
   const activeSubtotal = originalSubtotal - discountAmount;
-  const isFreeShippingThreshold = activeSubtotal >= 999;
+  const isFreeShippingThreshold = activeSubtotal >= freeDeliveryThreshold;
   const shippingFee =
     deliveryMethod === "express" ? 99 : isFreeShippingThreshold ? 0 : 49;
 

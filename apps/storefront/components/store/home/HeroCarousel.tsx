@@ -21,6 +21,7 @@ interface CarouselPromotion {
 
 interface HeroCarouselProps {
   promotions?: CarouselPromotion[];
+  freeDeliveryThreshold?: number;
 }
 
 interface Slide {
@@ -43,7 +44,7 @@ const permanentSlide: Slide = {
   ctaHref: "/collections/pens",
 };
 
-export default function HeroCarousel({ promotions = [] }: HeroCarouselProps) {
+export default function HeroCarousel({ promotions = [], freeDeliveryThreshold = 999 }: HeroCarouselProps) {
   // Construct list of slides: always start with the permanent branding slide, then append promotions
   const slides: Slide[] = [
     permanentSlide,
@@ -166,7 +167,7 @@ export default function HeroCarousel({ promotions = [] }: HeroCarouselProps) {
       {/* Floating Trust Indicator (Pill badge over hero bottom-left) */}
       <div className="absolute bottom-6 left-6 sm:left-16 z-25 hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 dark:bg-black/35 backdrop-blur-md border border-white/10 text-white text-[10px] font-bold shadow-md pointer-events-none">
         <Award size={12} className="text-[var(--ag-yellow)]" />
-        <span>Free Shipping above ₹999 Across India</span>
+        <span>Free Shipping above ₹{freeDeliveryThreshold} Across India</span>
       </div>
 
       {/* Nav Arrow Buttons */}

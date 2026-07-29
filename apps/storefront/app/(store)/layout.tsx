@@ -21,6 +21,7 @@ import WhatsAppFAB from "@/components/store/ui/WhatsAppFAB";
 import FloatingCartButton from "@/components/store/ui/FloatingCartButton";
 import AuthProvider from "@/components/store/auth/AuthProvider";
 import { getMegaMenuCategories } from "@/lib/actions/product-actions";
+import { getStoreSettings } from "@/lib/actions/settings";
 
 export default async function StoreLayout({
   children,
@@ -28,12 +29,13 @@ export default async function StoreLayout({
   children: React.ReactNode;
 }) {
   const categories = await getMegaMenuCategories();
+  const settings = await getStoreSettings();
 
   return (
     <AuthProvider>
     <div className="flex flex-col min-h-screen bg-[var(--ag-gray-100)]">
       {/* ── Sticky Header (Zones A, B, and C) ── */}
-      <Header categories={categories} />
+      <Header categories={categories} freeDeliveryThreshold={settings.freeDeliveryThreshold} />
 
       {/* ── Main content ── */}
       <main className="flex-1 pb-16 md:pb-0">
@@ -44,7 +46,7 @@ export default async function StoreLayout({
       <Footer />
 
       {/* ── Viewport-fixed overlays ── */}
-      <CartDrawer />
+      <CartDrawer freeDeliveryThreshold={settings.freeDeliveryThreshold} />
       <MobileMenu categories={categories} />
       <WhatsAppFAB />
       <FloatingCartButton />

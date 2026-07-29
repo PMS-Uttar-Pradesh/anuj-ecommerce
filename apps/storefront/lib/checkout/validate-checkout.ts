@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { getStoreSettings } from "@/lib/actions/settings";
 
 const checkoutCartInclude = {
   items: {
@@ -132,7 +133,8 @@ export async function validateCheckout(
   }
 
   const activeSubtotal = subtotal - discount;
-  const isFreeShippingThreshold = activeSubtotal >= 999;
+  const storeSettings = await getStoreSettings();
+  const isFreeShippingThreshold = activeSubtotal >= storeSettings.freeDeliveryThreshold;
   const shipping =
     deliveryMethod === "express" ? 99 : isFreeShippingThreshold ? 0 : 49;
   const total = activeSubtotal + shipping;

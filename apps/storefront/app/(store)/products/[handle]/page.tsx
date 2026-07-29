@@ -16,6 +16,7 @@ import { useUIStore } from "@/components/store/ui-store";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { PLACEHOLDER_IMAGE } from "@/lib/utils";
 import { getPublicReviews, checkUserCanReview } from "@/lib/actions/reviews";
+import { getStoreSettings } from "@/lib/actions/settings";
 
 interface PageProps {
   params: Promise<{ handle: string }>;
@@ -32,6 +33,7 @@ export default function ProductDetailPage({ params }: PageProps) {
   const [addingToCart, setAddingToCart] = useState(false);
   const [cartSuccess, setCartSuccess] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<StorefrontProduct[]>([]);
+  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState(999);
   const { isAuthenticated } = useAuthStore();
   const [reviews, setReviews] = useState<any[]>([]);
   const [canReview, setCanReview] = useState(false);
@@ -67,6 +69,9 @@ export default function ProductDetailPage({ params }: PageProps) {
           const fetchedRelated = await getProductsByCategory(fetchedProd.category?.slug || "");
           setRelatedProducts((fetchedRelated as StorefrontProduct[]).filter((p) => p.id !== fetchedProd.id).slice(0, 3));
         }
+
+        const settings = await getStoreSettings();
+        setFreeDeliveryThreshold(settings.freeDeliveryThreshold);
       } catch (err) {
         console.error(err);
       } finally {
@@ -278,7 +283,7 @@ export default function ProductDetailPage({ params }: PageProps) {
             <div className="flex flex-col gap-2 bg-card text-card-foreground border border-border p-4 rounded-[var(--radius-lg)] mt-2">
               <div className="flex items-center gap-2.5 text-xs font-semibold text-foreground">
                 <Truck size={15} className="text-emerald-600 shrink-0" />
-                <span>Free delivery on orders above ₹999</span>
+                <span>Free delivery on orders above ₹{freeDeliveryThreshold}</span>
               </div>
               <div className="flex items-center gap-2.5 text-xs font-semibold text-foreground">
                 <RotateCcw size={15} className="text-emerald-600 shrink-0" />

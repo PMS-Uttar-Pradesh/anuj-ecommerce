@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { getProducts } from "@/lib/actions/product-actions";
 import { StorefrontProduct } from "../products/ProductCard";
 
-export default function CartDrawer() {
+export default function CartDrawer({ freeDeliveryThreshold = 999 }: { freeDeliveryThreshold?: number }) {
   const router = useRouter();
   const { isCartOpen, setCartOpen } = useUIStore();
   const { items, addItem } = useCartStore();
@@ -22,7 +22,7 @@ export default function CartDrawer() {
   const cartCount = items.reduce((total, item) => total + item.quantity, 0);
   const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0);
 
-  const threshold = 999;
+  const threshold = freeDeliveryThreshold;
   const isFreeShipping = subtotal >= threshold;
   const remaining = threshold - subtotal;
   const progress = Math.min((subtotal / threshold) * 100, 100);
@@ -178,7 +178,7 @@ export default function CartDrawer() {
                       Your cart is empty
                     </h3>
                     <p className="text-xs text-[var(--ag-gray-500)] dark:text-neutral-400 mb-6 max-w-[280px] font-semibold">
-                      Add items to your cart to see them here. Free delivery above ₹999!
+                      Add items to your cart to see them here. Free delivery above ₹{threshold}!
                     </p>
                     <button
                       onClick={() => setCartOpen(false)}

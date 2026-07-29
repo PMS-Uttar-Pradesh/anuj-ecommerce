@@ -1,36 +1,40 @@
 // apps/storefront/components/store/home/TrustBar.tsx
 import { ShieldCheck, Truck, CreditCard, RotateCcw } from "lucide-react";
 
+import { getStoreSettings } from "@/lib/actions/settings";
+
 interface TrustItem {
   icon: React.ComponentType<{ size?: string | number; className?: string; strokeWidth?: number }>;
   title: string;
   description: string;
 }
 
-const trustItems: TrustItem[] = [
-  {
-    icon: ShieldCheck,
-    title: "100% Genuine Products",
-    description: "Sourced directly from global brands",
-  },
-  {
-    icon: Truck,
-    title: "Fast Delivery Across India",
-    description: "Free shipping on orders above ₹999",
-  },
-  {
-    icon: CreditCard,
-    title: "Secure Payments",
-    description: "UPI, Cards, and Net Banking protected",
-  },
-  {
-    icon: RotateCcw,
-    title: "Easy Returns",
-    description: "7-day hassle free replacement policy",
-  },
-];
+export default async function TrustBar() {
+  const settings = await getStoreSettings();
 
-export default function TrustBar() {
+  const trustItems: TrustItem[] = [
+    {
+      icon: ShieldCheck,
+      title: "100% Genuine Products",
+      description: "Sourced directly from global brands",
+    },
+    {
+      icon: Truck,
+      title: "Fast Delivery Across India",
+      description: `Free shipping on orders above ₹${settings.freeDeliveryThreshold}`,
+    },
+    {
+      icon: CreditCard,
+      title: "Secure Payments",
+      description: "UPI, Cards, and Net Banking protected",
+    },
+    {
+      icon: RotateCcw,
+      title: "Easy Returns",
+      description: "7-day hassle free replacement policy",
+    },
+  ];
+
   return (
     <section
       className="w-full bg-white dark:bg-neutral-900 border-b border-[var(--ag-gray-200)] dark:border-neutral-800 select-none"

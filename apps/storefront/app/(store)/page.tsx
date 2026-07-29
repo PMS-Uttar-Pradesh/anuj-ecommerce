@@ -9,6 +9,7 @@ import ReviewsCarousel from "@/components/store/home/ReviewsCarousel";
 import InfiniteShowcase from "@/components/store/home/InfiniteShowcase";
 import { getCategories } from "@/lib/actions/product-actions";
 import prisma from "@/lib/prisma";
+import { getStoreSettings } from "@/lib/actions/settings";
 
 export default async function Home() {
   const currentDate = new Date();
@@ -67,10 +68,12 @@ export default async function Home() {
   // Render a responsive grid of 9 columns if few categories, otherwise a scrollable 18-column track
   const columns = mappedCategories.length > 9 ? 18 : 9;
 
+  const settings = await getStoreSettings();
+
   return (
-    <>
-      {/* 1. Hero Section */}
-      <HeroCarousel promotions={promotionsWithSlugs} />
+    <div className="flex flex-col">
+      {/* Hero Carousel Area */}
+      <HeroCarousel promotions={promotionsWithSlugs} freeDeliveryThreshold={settings.freeDeliveryThreshold} />
 
       {/* 2. Trust Bar */}
       <TrustBar />
@@ -117,6 +120,6 @@ export default async function Home() {
       {/* 10. Infinite Showcase Experience */}
       <InfiniteShowcase />
 
-    </>
+    </div>
   );
 }

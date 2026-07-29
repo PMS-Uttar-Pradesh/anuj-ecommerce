@@ -5,13 +5,14 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
-const promos = [
-  "Free shipping on orders above ₹999 — across India",
-  "New arrivals every week — pens, notebooks & art tools",
-  "Premium stationery curated for creators and writers",
-];
+export default function AnnouncementBar({ freeDeliveryThreshold = 999 }: { freeDeliveryThreshold?: number }) {
+  const promos = [
+    `Free shipping on orders above ₹${freeDeliveryThreshold} — across India`,
+    "New arrivals every week — pens, notebooks & art tools",
+    "Premium stationery curated for creators and writers",
+  ];
 
-const SOCIAL_LINKS = [
+  const SOCIAL_LINKS = [
   {
     label: "Facebook",
     href: "https://www.facebook.com",
@@ -41,7 +42,6 @@ const SOCIAL_LINKS = [
   },
 ];
 
-export default function AnnouncementBar() {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {

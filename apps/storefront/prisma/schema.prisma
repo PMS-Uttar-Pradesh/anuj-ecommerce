@@ -314,3 +314,9 @@ enum PaymentMethod {
   ONLINE
   COD
 }
+
+model StoreSettings {
+  id                    String   @id @default("default")
+  freeDeliveryThreshold Int      @default(999)
+  updatedAt             DateTime @updatedAt
+}

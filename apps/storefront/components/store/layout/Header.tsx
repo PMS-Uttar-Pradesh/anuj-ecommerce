@@ -27,6 +27,7 @@ import {
 
 interface HeaderProps {
   categories: any[];
+  freeDeliveryThreshold?: number;
 }
 
 // Popular stationery searches
@@ -39,7 +40,7 @@ const trendingSearches = [
   "Washi Tape",
 ];
 
-export default function Header({ categories = [] }: HeaderProps) {
+export default function Header({ categories = [], freeDeliveryThreshold = 999 }: HeaderProps) {
   const navCategories = categories.map((c) => c.name);
   const searchCategories = ["All Categories", ...categories.map((c) => c.name)];
   const router = useRouter();
@@ -210,7 +211,7 @@ export default function Header({ categories = [] }: HeaderProps) {
           isScrolled ? "h-0 opacity-0 pointer-events-none" : "h-10 opacity-100"
         }`}
       >
-        <AnnouncementBar />
+        <AnnouncementBar freeDeliveryThreshold={freeDeliveryThreshold} />
       </div>
 
       {/* STICKY CONTAINER FOR ZONE B & C */}

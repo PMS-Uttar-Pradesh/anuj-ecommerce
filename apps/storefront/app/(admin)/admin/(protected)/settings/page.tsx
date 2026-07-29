@@ -1,15 +1,14 @@
-/**
- * Settings Page — `/admin/settings`
- *
- * Placeholder for upcoming admin configuration options.
- */
-import { Settings, Hammer } from "lucide-react";
+import { Settings } from "lucide-react";
+import SettingsForm from "@/components/admin/SettingsForm";
+import { getStoreSettings } from "@/lib/actions/settings";
 
 export const metadata = {
   title: "Settings — Personal Marketing Store Admin",
 };
 
-export default function AdminSettingsPage() {
+export default async function AdminSettingsPage() {
+  const storeSettings = await getStoreSettings();
+
   return (
     <div className="max-w-3xl">
       {/* Page header */}
@@ -28,23 +27,8 @@ export default function AdminSettingsPage() {
         </p>
       </div>
 
-      {/* Coming soon card */}
-      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-12 flex flex-col items-center justify-center text-center gap-4 shadow-sm">
-        <div className="size-14 rounded-2xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center">
-          <Hammer className="size-6 text-zinc-500 dark:text-zinc-400" />
-        </div>
-        <div>
-          <p className="text-base font-semibold text-zinc-900 dark:text-zinc-200">
-            Coming Soon
-          </p>
-          <p className="text-sm text-zinc-500 mt-1 max-w-xs">
-            Admin settings will be available in an upcoming release. Check back soon.
-          </p>
-        </div>
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 text-amber-800 dark:text-amber-500 text-xs font-semibold">
-          <span className="size-1.5 rounded-full bg-amber-500 animate-pulse" />
-          In Development
-        </span>
+      <div className="grid gap-6">
+        <SettingsForm initialThreshold={storeSettings.freeDeliveryThreshold} />
       </div>
     </div>
   );

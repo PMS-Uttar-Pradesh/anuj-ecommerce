@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useCartStore } from "@/lib/store/cart-store";
+import { getStoreSettings } from "@/lib/actions/settings";
 import {
   Minus,
   Plus,
@@ -18,6 +20,13 @@ export default function CartPage() {
   const increaseQuantity = useCartStore((state) => state.increaseQuantity);
   const decreaseQuantity = useCartStore((state) => state.decreaseQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
+  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState(999);
+
+  useEffect(() => {
+    getStoreSettings().then((settings) => {
+      setFreeDeliveryThreshold(settings.freeDeliveryThreshold);
+    });
+  }, []);
 
   const subtotal = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -28,7 +37,7 @@ export default function CartPage() {
     0
   );
   const savings = originalTotal - subtotal;
-  const delivery = subtotal >= 999 ? 0 : 49;
+  const delivery = subtotal >= freeDeliveryThreshold ? 0 : 49;
   const total = subtotal + delivery;
 
   return (
@@ -117,7 +126,7 @@ export default function CartPage() {
             {/* ── Cart Items ── */}
             <div className="lg:col-span-2 space-y-4">
               {/* Free shipping progress */}
-              {subtotal < 999 && (
+              {subtotal < freeDeliveryThreshold && (
                 <div
                   className="rounded-2xl p-4 border"
                   style={{
@@ -133,7 +142,7 @@ export default function CartPage() {
                     >
                       Add{" "}
                       <span style={{ color: "var(--brand-coral)" }}>
-                        ₹{999 - subtotal}
+                        ₹{freeDeliveryThreshold - subtotal}
                       </span>{" "}
                       more for FREE delivery!
                     </span>
@@ -145,7 +154,7 @@ export default function CartPage() {
                     <div
                       className="h-full rounded-full transition-all duration-500"
                       style={{
-                        width: `${Math.min((subtotal / 999) * 100, 100)}%`,
+                        width: `${Math.min((subtotal / freeDeliveryThreshold) * 100, 100)}%`,
                         background:
                           "linear-gradient(90deg, #E8442A, #F5A623)",
                       }}
@@ -154,7 +163,7 @@ export default function CartPage() {
                 </div>
               )}
 
-              {subtotal >= 999 && (
+              {subtotal >= freeDeliveryThreshold && (
                 <div
                   className="rounded-2xl p-4 border flex items-center gap-3"
                   style={{
