@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, revalidatePath, updateTag } from "next/cache";
 import { unstable_cache } from "next/cache";
 
 export const getStoreSettings = unstable_cache(
@@ -43,7 +43,8 @@ export async function updateStoreSettings(data: { freeDeliveryThreshold: number 
       },
     });
 
-    revalidateTag("store-settings", "max");
+    updateTag("store-settings");
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (error: any) {
     console.error("[updateStoreSettings] Error updating settings:", error);
