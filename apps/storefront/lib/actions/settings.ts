@@ -5,7 +5,7 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 import { revalidateTag, revalidatePath, updateTag } from "next/cache";
 import { unstable_cache } from "next/cache";
 
-export const getStoreSettings = unstable_cache(
+const getCachedStoreSettings = unstable_cache(
   async () => {
     // Read-only: never writes. Returns the persisted row or an in-memory
     // default if the seed hasn't run yet. This is safe to call concurrently
@@ -18,6 +18,10 @@ export const getStoreSettings = unstable_cache(
   ["store-settings"],
   { tags: ["store-settings"] }
 );
+
+export async function getStoreSettings() {
+  return getCachedStoreSettings();
+}
 
 export async function updateStoreSettings(data: { freeDeliveryThreshold: number }) {
   try {
