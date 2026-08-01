@@ -19,7 +19,7 @@ export default function ResetPasswordClient() {
   const recoveryType = searchParams.get("type");
   const accessToken = searchParams.get("access_token");
   const refreshToken = searchParams.get("refresh_token");
-  const code = searchParams.get("code");
+  // `code` is handled by server-side /auth/callback. Do NOT exchange it here.
 
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
@@ -30,77 +30,62 @@ export default function ResetPasswordClient() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (status !== "idle") {
-      return;
-    }
+    if (status !== "idle") return;
 
-    // Support Supabase Auth v2 recovery links that include a `code` query parameter.
-    // Flow: exchange code -> establish session -> allow password update.
+    // The auth callback (/auth/callback) is responsible for exchanging any `code`
+    // and establishing a session server-side. This client should only verify that
+    // a valid recovery session exists (or handle legacy access_token flows).
     const supabase = createClient();
 
-    if (code) {
+    const verifySession = async () => {
+      // If the URL contains a `code` param (v2 recovery), navigate to /auth/callback so
+      // the server-side callback can exchange it (PKCE) and establish the session. The
+      // callback will redirect back to /account/reset-password when done.
+      const code = searchParams.get("code");
+      if (code) {
+        // Perform a full-location navigation to ensure the callback runs server-side.
+        window.location.href = `/auth/callback?code=${encodeURIComponent(code)}&next=/account/reset-password`;
+        return;
+      }
+
       setStatus("loading");
 
-      // exchangeCodeForSession accepts an object in recent supabase-js versions.
-      // Wrap in try/catch and handle both possible shapes of the API result.
-      const doExchange = async () => {
-        try {
-          // Prefer object form, but allow passing string if library expects it.
-          let result: any;
+      // First, check for an active session (exchange should have been done by /auth/callback)
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          setMessage(error.message ?? "Unable to verify recovery session.");
+          setStatus("error");
+          return;
+        }
 
-          try {
-            result = await (supabase.auth as any).exchangeCodeForSession({ code });
-          } catch (err) {
-            // Fallback: some versions may accept the code string directly
-            result = await (supabase.auth as any).exchangeCodeForSession(code);
-          }
+        if (data?.session) {
+          setStatus("ready");
+          return;
+        }
 
-          const { data, error } = result || {};
-
-          if (error || !data?.session) {
-            setMessage(error?.message ?? "Unable to establish a recovery session. Please request a new reset link.");
+        // Backwards-compatible: support legacy `type=recovery&access_token=...&refresh_token=...` links
+        if (recoveryType === "recovery" && accessToken && refreshToken) {
+          const { data: sData, error: sErr } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+          if (sErr || !sData?.session) {
+            setMessage(sErr?.message ?? "Unable to establish a recovery session. Please request a new reset link.");
             setStatus("error");
             return;
           }
 
           setStatus("ready");
-        } catch (err: any) {
-          setMessage(err?.message ?? "Unable to establish a recovery session. Please request a new reset link.");
-          setStatus("error");
-        }
-      };
-
-      doExchange();
-      return;
-    }
-
-    // Backwards-compatible: some flows still use access_token + refresh_token in the URL
-    if (recoveryType !== "recovery" || !accessToken || !refreshToken) {
-      setMessage("This password reset link is invalid or has expired.");
-      setStatus("error");
-      return;
-    }
-
-    setStatus("loading");
-
-    supabase
-      .auth
-      .setSession({ access_token: accessToken, refresh_token: refreshToken })
-      .then(({ data, error }) => {
-        if (error || !data.session) {
-          setMessage(error?.message ?? "Unable to establish a recovery session. Please request a new reset link.");
-          setStatus("error");
           return;
         }
 
-        setStatus("ready");
-      })
-      .catch((error) => {
-        setMessage(
-          error?.message ?? "Unable to establish a recovery session. Please request a new reset link."
-        );
+        setMessage("This password reset link is invalid or has expired.");
         setStatus("error");
-      });
+      } catch (err: any) {
+        setMessage(err?.message ?? "Unable to verify recovery session. Please request a new reset link.");
+        setStatus("error");
+      }
+    };
+
+    verifySession();
   }, [status, recoveryType, accessToken, refreshToken]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
