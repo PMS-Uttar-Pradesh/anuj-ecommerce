@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import ReportsFilterClient from "@/components/admin/ReportsFilterClient";
-import ReportsChartClient from "@/components/admin/ReportsChartClient";
+import ReportsChartWrapper from "@/components/admin/ReportsChartWrapper";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { ArrowUpRight, ShoppingBag, CreditCard, Box, TrendingUp } from "lucide-react";
 import AdminRefreshButton from "@/components/admin/AdminRefreshButton";
@@ -215,7 +215,7 @@ export default async function ReportsPage({ searchParams }: PageProps) {
       </div>
 
       {/* Dynamic Graph */}
-      <ReportsChartClient
+      <ReportsChartWrapper
         data={chartData}
         title="Revenue Breakdown"
         subtitle={`Daily sales trends inside the selected period (${presetLabel})`}
