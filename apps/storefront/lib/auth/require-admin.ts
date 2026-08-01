@@ -26,6 +26,7 @@ export async function requireAdmin(): Promise<PrismaUser> {
   });
 
   if (!dbUser || dbUser.role !== "ADMIN") {
+    // Non-admin users are redirected back to the storefront home page.
     redirect("/");
   }
 

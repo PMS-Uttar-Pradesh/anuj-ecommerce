@@ -10,6 +10,7 @@
  */
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getPrismaUser } from "@/lib/auth/get-user";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -20,7 +21,19 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code);
   }
 
-  // Always redirect to admin dashboard — requireAdmin() handles role gating.
-  // A non-admin Google user will be bounced to / by the (protected) layout.
-  return NextResponse.redirect(`${origin}/admin/dashboard`);
+  // After exchanging the code for a session, determine whether the
+  // authenticated user is an ADMIN. Redirect accordingly to provide
+  // a dedicated Access Denied page for unauthorized admin accounts.
+  const prismaUser = await getPrismaUser();
+
+  if (!prismaUser) {
+    // Not authenticated — send back to admin login
+    return NextResponse.redirect(`${origin}/admin/login`);
+  }
+
+  if (prismaUser.role === "ADMIN") {
+    return NextResponse.redirect(`${origin}/admin/dashboard`);
+  }
+
+  return NextResponse.redirect(`${origin}/admin/access-denied`);
 }
