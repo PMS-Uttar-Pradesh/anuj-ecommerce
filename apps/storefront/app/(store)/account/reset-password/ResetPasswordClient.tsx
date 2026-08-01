@@ -19,6 +19,7 @@ export default function ResetPasswordClient() {
   const recoveryType = searchParams.get("type");
   const accessToken = searchParams.get("access_token");
   const refreshToken = searchParams.get("refresh_token");
+  const code = searchParams.get("code");
 
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
@@ -33,13 +34,53 @@ export default function ResetPasswordClient() {
       return;
     }
 
+    // Support Supabase Auth v2 recovery links that include a `code` query parameter.
+    // Flow: exchange code -> establish session -> allow password update.
+    const supabase = createClient();
+
+    if (code) {
+      setStatus("loading");
+
+      // exchangeCodeForSession accepts an object in recent supabase-js versions.
+      // Wrap in try/catch and handle both possible shapes of the API result.
+      const doExchange = async () => {
+        try {
+          // Prefer object form, but allow passing string if library expects it.
+          let result: any;
+
+          try {
+            result = await (supabase.auth as any).exchangeCodeForSession({ code });
+          } catch (err) {
+            // Fallback: some versions may accept the code string directly
+            result = await (supabase.auth as any).exchangeCodeForSession(code);
+          }
+
+          const { data, error } = result || {};
+
+          if (error || !data?.session) {
+            setMessage(error?.message ?? "Unable to establish a recovery session. Please request a new reset link.");
+            setStatus("error");
+            return;
+          }
+
+          setStatus("ready");
+        } catch (err: any) {
+          setMessage(err?.message ?? "Unable to establish a recovery session. Please request a new reset link.");
+          setStatus("error");
+        }
+      };
+
+      doExchange();
+      return;
+    }
+
+    // Backwards-compatible: some flows still use access_token + refresh_token in the URL
     if (recoveryType !== "recovery" || !accessToken || !refreshToken) {
       setMessage("This password reset link is invalid or has expired.");
       setStatus("error");
       return;
     }
 
-    const supabase = createClient();
     setStatus("loading");
 
     supabase
