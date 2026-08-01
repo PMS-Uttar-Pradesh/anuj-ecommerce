@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminLoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; reset?: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   // ── Server-side session check ──────────────────────────────────────
   // If the visitor is already signed in as ADMIN, skip the login page.
@@ -32,7 +32,7 @@ export default async function AdminLoginPage({
     }
   }
 
-  const { error: urlError, reset: urlReset } = await searchParams;
+  const { error: urlError } = await searchParams;
 
   // ── Render login UI ────────────────────────────────────────────────
   return (
@@ -59,7 +59,7 @@ export default async function AdminLoginPage({
             </div>
           }
         >
-          <AdminLoginForm urlError={urlError} urlReset={urlReset} />
+          <AdminLoginForm urlError={urlError} />
         </Suspense>
       </div>
     </main>

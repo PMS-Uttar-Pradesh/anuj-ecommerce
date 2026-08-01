@@ -37,9 +37,7 @@ function LoginForm() {
   const [state, formAction, isPending] = useActionState(login, initialState);
   const [showPassword, setShowPassword] = useState(false);
 
-  const urlSuccess = searchParams.get("success");
   const displayError = state.error || urlError;
-  const displaySuccess = urlSuccess === "1";
 
   return (
     <div className="w-full max-w-[440px] mx-auto">
@@ -63,14 +61,6 @@ function LoginForm() {
             Enter your credentials to access your account
           </p>
         </div>
-
-        {/* Success banner */}
-        {displaySuccess && (
-          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-50 p-3 rounded-lg mb-5 border border-emerald-200 animate-fadeInUp">
-            <span className="text-lg">✓</span>
-            <span>Your password has been reset. Please sign in with your new password.</span>
-          </div>
-        )}
 
         {/* Error banner */}
         {displayError && (

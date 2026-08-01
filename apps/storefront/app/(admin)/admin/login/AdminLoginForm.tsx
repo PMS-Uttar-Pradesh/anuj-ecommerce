@@ -12,17 +12,10 @@ import { useTransition } from "react";
 import { adminSignInWithGoogle } from "@/lib/actions/auth/admin-google";
 import { AlertCircle, Loader2, ShieldCheck, BarChart3, Package, Users } from "lucide-react";
 
-export default function AdminLoginForm({
-  urlError,
-  urlReset,
-}: {
-  urlError?: string;
-  urlReset?: string;
-}) {
+export default function AdminLoginForm({ urlError }: { urlError?: string }) {
   const [isGooglePending, startGoogleTransition] = useTransition();
 
   const displayError = urlError;
-  const displaySuccess = urlReset === "success";
   const anyPending = isGooglePending;
 
   const handleGoogle = () => {
@@ -105,16 +98,6 @@ export default function AdminLoginForm({
             </p>
           </div>
 
-          {/* Success banner */}
-          {displaySuccess && (
-            <div className="flex items-start gap-2.5 text-sm font-medium text-emerald-700 bg-emerald-50 p-3.5 rounded-xl mb-5 border border-emerald-200">
-              <span className="text-lg">✓</span>
-              <span>
-                Your password has been reset. Please sign in with your new password.
-              </span>
-            </div>
-          )}
-
           {/* Error banner */}
           {displayError && (
             <div className="flex items-start gap-2.5 text-sm font-medium text-red-600 bg-red-50 p-3.5 rounded-xl mb-5 border border-red-200">
@@ -123,7 +106,10 @@ export default function AdminLoginForm({
             </div>
           )}
 
-          <div className="space-y-5">            {/* Premium security card */}
+
+
+          <div className="space-y-5">
+            {/* Premium security card */}
             <div className="rounded-xl p-4 bg-zinc-800 border border-zinc-700 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="text-2xl">🛡</div>

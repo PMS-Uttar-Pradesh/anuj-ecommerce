@@ -34,16 +34,10 @@ export async function adminResetPassword(
   }
 
   const supabase = await createClient();
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ??
-    "https://anuj-ecommerce-pi.vercel.app";
-
-  const redirectTo = new URL("/admin/login", siteUrl);
-  redirectTo.searchParams.set("reset", "success");
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://anuj-ecommerce-pi.vercel.app";
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: redirectTo.toString(),
+    redirectTo: `${siteUrl}/admin/login`,
   });
 
   if (error) {
