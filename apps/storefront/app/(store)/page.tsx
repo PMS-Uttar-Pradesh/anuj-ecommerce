@@ -5,7 +5,6 @@ import CategoryGrid from "@/components/store/home/CategoryGrid";
 import ProductCarousel from "@/components/store/home/ProductCarousel";
 import PromoCards from "@/components/store/home/PromoCards";
 import BudgetSection from "@/components/store/home/BudgetSection";
-import ReviewsCarousel from "@/components/store/home/ReviewsCarousel";
 import InfiniteShowcase from "@/components/store/home/InfiniteShowcase";
 import { getCategories } from "@/lib/actions/product-actions";
 import prisma from "@/lib/prisma";
@@ -114,8 +113,10 @@ export default async function Home() {
       <PromoCards />
       <BudgetSection />
 
-      {/* 9. Customer Reviews */}
-      <ReviewsCarousel />
+      {/* 9. Customer Reviews (temporarily removed for launch) */}
+      <section className="py-section bg-[#F8F7F4] dark:bg-neutral-950" aria-hidden="true">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8" />
+      </section>
 
       {/* 10. Infinite Showcase Experience */}
       <InfiniteShowcase />
