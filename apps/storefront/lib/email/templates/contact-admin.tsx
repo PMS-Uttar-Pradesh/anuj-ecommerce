@@ -19,7 +19,7 @@ interface ContactAdminEmailProps {
 }
 
 export const ContactAdminEmail = ({
-  name = "John Doe",
+  name = "Your Name",
   email = "john@example.com",
   subject = "Support Request",
   message = "This is a test support message.",

@@ -59,8 +59,8 @@ export default function ContactPage() {
             Contact Support
           </h1>
           <p className="text-base text-[var(--ag-gray-500)] dark:text-slate-400 font-medium">
-            Have questions about our premium stationery products, orders, or customization? 
-            Reach out to our support team and we will get back to you within 24 hours.
+            Have questions about our stationery products, orders, or customization? 
+            Reach out to our support team.
           </p>
         </div>
 
@@ -81,7 +81,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-[var(--ag-dark)] dark:text-white">Email Support</h3>
-                    <p className="text-xs text-[var(--ag-gray-500)] mt-1">support@pms.com</p>
+                    <p className="text-xs text-[var(--ag-gray-500)] mt-1">pmsshop.in@gmail.com</p>
                     <p className="text-[10px] text-[var(--ag-gray-400)] mt-0.5">Average response: &lt; 24h</p>
                   </div>
                 </div>
@@ -93,7 +93,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-[var(--ag-dark)] dark:text-white">Call Support</h3>
-                    <p className="text-xs text-[var(--ag-gray-500)] mt-1">+1 (800) 123-4567</p>
+                    <p className="text-xs text-[var(--ag-gray-500)] mt-1">+91 7880786433</p>
                     <p className="text-[10px] text-[var(--ag-gray-400)] mt-0.5">Mon - Fri: 9AM - 6PM IST</p>
                   </div>
                 </div>
@@ -104,11 +104,11 @@ export default function ContactPage() {
                     <MapPin size={20} />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-[var(--ag-dark)] dark:text-white">Headquarters</h3>
+                    <h3 className="text-sm font-bold text-[var(--ag-dark)] dark:text-white">Location</h3>
                     <p className="text-xs text-[var(--ag-gray-500)] mt-1">
-                      123 Stationery Avenue, Suite 100
+                      Khargasenpur, Thanagaddi Jalalpur Road,
                       <br />
-                      New Delhi, DL 110001
+                      Near Krishak College, Uttar Pradesh, 222181
                     </p>
                   </div>
                 </div>
