@@ -9,7 +9,7 @@ export default function WhatsAppFAB() {
 
   const handleWhatsAppClick = () => {
     // Open a mock WhatsApp chat link
-    window.open("https://wa.me/918604113271", "_blank", "noopener,noreferrer");
+    window.open("https://wa.me/917880786433", "_blank", "noopener,noreferrer");
   };
 
   return (
