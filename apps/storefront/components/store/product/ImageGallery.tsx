@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import Image from "next/image";
 import useEmblaCarousel from "embla-carousel-react";
 
 interface ImageGalleryProps {
@@ -12,7 +13,6 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomOrigin, setZoomOrigin] = useState("center");
-  const mainImageRef = useRef<HTMLImageElement>(null);
 
   // Mobile Embla carousel
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false });
@@ -40,7 +40,6 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!mainImageRef.current) return;
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - left) / width) * 100;
     const y = ((e.clientY - top) / height) * 100;
@@ -63,10 +62,12 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <img
-          ref={mainImageRef}
+        <Image
           src={images[activeIndex]}
           alt="Product details"
+          fill
+          priority
+          sizes="(min-width: 768px) 50vw, 100vw"
           className="w-full h-full object-cover transition-transform duration-100 ease-linear"
           style={{
             transformOrigin: zoomOrigin,
@@ -80,7 +81,7 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
         <div className="flex h-full">
           {images.map((img, i) => (
             <div key={i} className="flex-[0_0_100%] min-w-0 h-full relative">
-              <img src={img} alt="" className="w-full h-full object-cover" />
+              <Image src={img} alt="" fill sizes="100vw" className="w-full h-full object-cover" />
             </div>
           ))}
         </div>
@@ -97,7 +98,7 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
                 i === activeIndex ? "border-[var(--ag-red)] shadow-sm" : "border-[var(--ag-gray-200)]"
               }`}
             >
-              <img src={img} alt="" className="w-full h-full object-cover" />
+              <Image src={img} alt="" width={64} height={64} className="w-full h-full object-cover" />
             </button>
           ))}
         </div>

@@ -2,7 +2,7 @@
 "use client";
 
 import useEmblaCarousel from "embla-carousel-react";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getProducts, getProductsByCategory, getFeaturedProducts, getNewArrivals, getTrendingProducts } from "@/lib/actions/product-actions";
 import { StorefrontProduct } from "../products/ProductCard";
@@ -15,6 +15,7 @@ interface ProductCarouselProps {
   collectionId?: string;
   limit?: number;
   filterFn?: (p: StorefrontProduct) => boolean;
+  initialProducts?: StorefrontProduct[];
 }
 
 export default function ProductCarousel({
@@ -23,9 +24,16 @@ export default function ProductCarousel({
   collectionId,
   limit = 8,
   filterFn,
+  initialProducts,
 }: ProductCarouselProps) {
   const [products, setProducts] = useState<StorefrontProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const displayProducts = useMemo(() => {
+    const list = initialProducts ?? products;
+    const filtered = filterFn ? list.filter(filterFn) : list;
+    return filtered.slice(0, limit);
+  }, [filterFn, initialProducts, limit, products]);
+  const isLoading = initialProducts ? false : loading;
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "start",
@@ -60,6 +68,10 @@ export default function ProductCarousel({
   }, [emblaApi, onSelect]);
 
   useEffect(() => {
+    if (initialProducts) {
+      return;
+    }
+
     const fetchProducts = async () => {
       setLoading(true);
       try {
@@ -89,7 +101,7 @@ export default function ProductCarousel({
     };
 
     fetchProducts();
-  }, [collectionId, limit, filterFn]);
+  }, [collectionId, limit, filterFn, initialProducts]);
 
 
   return (
@@ -133,7 +145,7 @@ export default function ProductCarousel({
         {/* Viewport */}
         <div className="overflow-hidden cursor-grab active:cursor-grabbing" ref={emblaRef}>
           <div className="flex gap-5">
-            {loading ? (
+            {isLoading ? (
               [1, 2, 3, 4].map((n) => (
                 <div
                   key={n}
@@ -142,12 +154,12 @@ export default function ProductCarousel({
                   <div className="w-full aspect-[4/5] rounded-[var(--radius-lg)] border border-[var(--ag-gray-200)] dark:border-neutral-800 bg-white dark:bg-[#1E1E1E] skeleton h-[360px]" />
                 </div>
               ))
-            ) : products.length === 0 ? (
+            ) : displayProducts.length === 0 ? (
               <div className="w-full py-16 text-center text-sm font-semibold text-[var(--ag-gray-500)]">
                 No products found.
               </div>
             ) : (
-              products.map((product) => (
+              displayProducts.map((product) => (
                 <div
                   key={product.id}
                   className="flex-[0_0_50%] md:flex-[0_0_33.333%] lg:flex-[0_0_25%] min-w-0"

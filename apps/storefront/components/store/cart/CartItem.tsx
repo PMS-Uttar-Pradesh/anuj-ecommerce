@@ -2,8 +2,10 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { Trash2, Plus, Minus } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart-store";
+import { PLACEHOLDER_IMAGE } from "@/lib/utils";
 
 interface CartItemProps {
   item: {
@@ -24,9 +26,11 @@ export default function CartItemComponent({ item }: CartItemProps) {
     <div className="flex gap-4 py-4 border-b border-[var(--ag-gray-200)] dark:border-neutral-800 last:border-b-0">
       {/* Product Image */}
       <div className="w-16 h-16 rounded-[var(--radius-md)] overflow-hidden border border-[var(--ag-gray-200)] dark:border-neutral-750 bg-[var(--ag-gray-100)] dark:bg-neutral-850 shrink-0">
-        <img
-          src={item.image}
+        <Image
+          src={item.image || PLACEHOLDER_IMAGE}
           alt={item.name}
+          width={64}
+          height={64}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
       </div>

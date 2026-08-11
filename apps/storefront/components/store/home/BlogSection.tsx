@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 interface BlogPost {
   id: string;
@@ -72,9 +73,11 @@ export default function BlogSection() {
             >
               {/* Image side */}
               <div className="w-full sm:w-2/5 aspect-[16/9] sm:aspect-auto sm:min-h-[160px] overflow-hidden bg-[var(--ag-gray-100)] relative shrink-0">
-                <img
+                <Image
                   src={post.image}
                   alt=""
+                  fill
+                  sizes="(min-width: 768px) 40vw, 100vw"
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-1.04"
                   loading="lazy"
                 />

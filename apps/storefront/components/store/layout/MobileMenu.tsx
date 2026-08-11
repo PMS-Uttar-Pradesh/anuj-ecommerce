@@ -7,6 +7,7 @@ import { X, ChevronDown, ShoppingBag, User, Home, Package, MapPin, LogOut } from
 import { useUIStore } from "@/components/store/ui-store";
 import { useCartStore } from "@/lib/store/cart-store";
 import Link from "next/link";
+import Image from "next/image";
 import ThemeToggle from "@/components/store/ui/ThemeToggle";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { logout } from "@/lib/actions/auth/logout";
@@ -102,7 +103,7 @@ export default function MobileMenu({ categories = [] }: MobileMenuProps) {
             {/* Header */}
             <div className="p-4 border-b border-[var(--ag-gray-200)] dark:border-neutral-800 flex items-center justify-between bg-white dark:bg-neutral-900">
               <div className="flex items-center gap-2">
-                <img src="/logo.jpg" alt="Personal Marketing Store Logo" className="h-8 w-auto object-contain" />
+                <Image src="/logo.jpg" alt="Personal Marketing Store Logo" width={64} height={32} className="h-8 w-auto object-contain" />
                 <span className="font-display font-black text-sm leading-tight tracking-tight text-[var(--ag-dark)] dark:text-[var(--foreground)]">
                   Personal Marketing<br/>Store
                 </span>

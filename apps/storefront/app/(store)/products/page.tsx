@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronRight, Grid3x3, List, Search } from "lucide-react";
 import ProductCard from "@/components/store/products/ProductCard";
 import SkeletonCard from "@/components/store/ui/SkeletonCard";
@@ -233,7 +234,13 @@ export default function ProductsPage() {
                     const discount = originalPrice > price ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
                     return (
                       <div className="bg-card text-card-foreground border border-border p-4 rounded-[var(--radius-lg)] flex gap-4 items-center">
-                        <img src={product.images.find(i => i.isPrimary)?.url || product.images[0]?.url || PLACEHOLDER_IMAGE} alt="" className="w-20 h-20 object-cover rounded-[var(--radius-sm)] border shrink-0 bg-[var(--ag-gray-100)]" />
+                        <Image
+                          src={product.images.find(i => i.isPrimary)?.url || product.images[0]?.url || PLACEHOLDER_IMAGE}
+                          alt=""
+                          width={80}
+                          height={80}
+                          className="w-20 h-20 object-cover rounded-[var(--radius-sm)] border shrink-0 bg-[var(--ag-gray-100)]"
+                        />
                         <div className="flex-1 min-w-0">
                           <span className="text-[10px] font-bold text-[var(--ag-gray-500)] uppercase tracking-wider">{product.category?.name}</span>
                           <h4 className="font-bold text-sm text-foreground truncate">{product.name}</h4>

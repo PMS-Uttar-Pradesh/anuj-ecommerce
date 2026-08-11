@@ -3,6 +3,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 
 interface MegaMenuProps {
@@ -85,9 +86,11 @@ export default function MegaMenu({ category, categoryData, onClose }: MegaMenuPr
                   onClick={onClose}
                 >
                   <div className="w-full aspect-square rounded-[var(--radius-lg)] overflow-hidden border border-[var(--ag-gray-200)] dark:border-neutral-800 bg-[var(--ag-gray-100)] dark:bg-neutral-800 transition-transform duration-300 group-hover:scale-102 group-hover:shadow-md">
-                    <img
+                    <Image
                       src={sub.image}
                       alt={sub.title}
+                      width={180}
+                      height={180}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
@@ -119,9 +122,11 @@ export default function MegaMenu({ category, categoryData, onClose }: MegaMenuPr
                   onClick={onClose}
                 >
                   <div className="w-14 h-14 rounded-[var(--radius-sm)] overflow-hidden bg-white dark:bg-neutral-700 shrink-0 border border-[var(--ag-gray-200)] dark:border-neutral-600">
-                    <img
+                    <Image
                       src={prod.image}
                       alt={prod.title}
+                      width={56}
+                      height={56}
                       className="w-full h-full object-cover"
                     />
                   </div>

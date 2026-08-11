@@ -3,6 +3,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -19,6 +20,7 @@ import { useCartStore } from "@/lib/store/cart-store";
 import { useCheckoutStore, CheckoutStep } from "@/lib/store/checkout-store";
 import { hasDefaultAddressAction } from "@/lib/actions/address";
 import { getCheckoutDetails, createCodOrderAction } from "@/lib/actions/checkout";
+import { PLACEHOLDER_IMAGE } from "@/lib/utils";
 
 interface CheckoutClientProps {
   freeDeliveryThreshold: number;
@@ -1059,9 +1061,11 @@ export default function CheckoutClient({ freeDeliveryThreshold }: CheckoutClient
                       className="flex gap-3 py-3 first:pt-0 last:pb-0 items-center justify-between"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <img
-                          src={item.image}
+                        <Image
+                          src={item.image || PLACEHOLDER_IMAGE}
                           alt=""
+                          width={40}
+                          height={40}
                           className="w-10 h-10 object-cover rounded-[var(--radius-md)] border border-border bg-muted shrink-0"
                         />
                         <div className="min-w-0">

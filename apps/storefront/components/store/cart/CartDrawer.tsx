@@ -3,6 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { X, ShoppingBag, Truck, Plus, Sparkles } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart-store";
 import { useUIStore } from "@/components/store/ui-store";
@@ -10,6 +11,7 @@ import CartItemComponent from "./CartItem";
 import { useRouter } from "next/navigation";
 import { getProducts } from "@/lib/actions/product-actions";
 import { StorefrontProduct } from "../products/ProductCard";
+import { PLACEHOLDER_IMAGE } from "@/lib/utils";
 
 export default function CartDrawer({ freeDeliveryThreshold = 999 }: { freeDeliveryThreshold?: number }) {
   const router = useRouter();
@@ -222,9 +224,11 @@ export default function CartDrawer({ freeDeliveryThreshold = 999 }: { freeDelive
                             className="flex items-center justify-between gap-3 bg-card text-card-foreground border border-border p-2.5 rounded-[var(--radius-lg)] shadow-xs hover:border-[var(--ag-red)]/30 transition-colors"
                             >
                               <div className="flex items-center gap-3 min-w-0">
-                                <img
-                                  src={prod.images.find(i => i.isPrimary)?.url || prod.images[0]?.url || ""}
+                                <Image
+                                  src={prod.images.find(i => i.isPrimary)?.url || prod.images[0]?.url || PLACEHOLDER_IMAGE}
                                   alt=""
+                                  width={40}
+                                  height={40}
                                   className="w-10 h-10 object-cover rounded-[var(--radius-md)] border border-[var(--ag-gray-200)] dark:border-neutral-850 shrink-0 bg-[var(--ag-gray-100)] dark:bg-neutral-800"
                                 />
                                 <div className="min-w-0">

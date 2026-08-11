@@ -4,6 +4,7 @@
 import { motion } from "framer-motion";
 import { Star, ShoppingCart } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useUIStore } from "@/components/store/ui-store";
 import { useCartStore } from "@/lib/store/cart-store";
 import { Prisma } from "@prisma/client";
@@ -74,9 +75,11 @@ export default function ProductCard({ product, showVendor = true, showBadge = tr
         <div className="relative aspect-square w-full bg-muted overflow-hidden border-b border-border shrink-0">
           
           {/* Primary image */}
-          <img
+          <Image
             src={primaryImage}
             alt={product.name}
+            fill
+            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
             className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-out-expo ${
               hasSecondaryImage && isHovered ? "opacity-0 scale-95" : "opacity-100 scale-100 group-hover:scale-105"
             }`}
@@ -85,9 +88,11 @@ export default function ProductCard({ product, showVendor = true, showBadge = tr
 
           {/* Secondary image on hover */}
           {hasSecondaryImage && (
-            <img
+            <Image
               src={secondaryImage}
               alt={product.name}
+              fill
+              sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
               className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-out-expo ${
                 isHovered ? "opacity-100 scale-105" : "opacity-0 scale-100"
               }`}

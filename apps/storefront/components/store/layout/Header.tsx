@@ -4,11 +4,13 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Search, User, ShoppingBag, Menu, X, Plus, Trash2, History, TrendingUp, Package, MapPin, LogOut } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart-store";
 import { useUIStore } from "@/components/store/ui-store";
 import { searchProducts } from "@/lib/actions/product-actions";
 import { StorefrontProduct } from "../products/ProductCard";
+import { PLACEHOLDER_IMAGE } from "@/lib/utils";
 import AnnouncementBar from "./AnnouncementBar";
 import MegaMenu from "./MegaMenu";
 import ThemeToggle from "@/components/store/ui/ThemeToggle";
@@ -228,7 +230,7 @@ export default function Header({ categories = [], freeDeliveryThreshold = 999 }:
         >
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-            <img src="/logo.jpg" alt="Personal Marketing Store Logo" className="h-12 w-auto object-contain" />
+            <Image src="/logo.jpg" alt="Personal Marketing Store Logo" width={96} height={48} className="h-12 w-auto object-contain" priority />
             <div className="hidden sm:block">
               <span className="text-xl font-display font-black tracking-tight leading-none text-foreground">
                 Personal Marketing Store
@@ -385,7 +387,13 @@ export default function Header({ categories = [], freeDeliveryThreshold = 999 }:
                                 }`}
                               >
                                 <div className="w-10 h-10 rounded-[var(--radius-md)] overflow-hidden bg-[var(--ag-gray-100)] dark:bg-neutral-800 border border-[var(--ag-gray-200)] dark:border-neutral-750 shrink-0">
-                                  <img src={prod.images.find(i => i.isPrimary)?.url || prod.images[0]?.url || ""} alt="" className="w-full h-full object-cover" />
+                                  <Image
+                                    src={prod.images.find(i => i.isPrimary)?.url || prod.images[0]?.url || PLACEHOLDER_IMAGE}
+                                    alt=""
+                                    width={40}
+                                    height={40}
+                                    className="w-full h-full object-cover"
+                                  />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <h4 className="text-xs sm:text-sm font-bold text-[var(--ag-dark)] dark:text-white truncate">{prod.name}</h4>

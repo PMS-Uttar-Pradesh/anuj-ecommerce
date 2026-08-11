@@ -6,6 +6,7 @@ import Autoplay from "embla-carousel-autoplay";
 import { useEffect, useState, useCallback } from "react";
 import { ChevronLeft, ChevronRight, Sparkles, Award } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { PromotionTargetType } from "@prisma/client";
 
@@ -26,7 +27,6 @@ interface HeroCarouselProps {
 
 interface Slide {
   image: string;
-  mobileImage: string;
   title: string;
   subtitle: string;
   ctaText: string;
@@ -36,7 +36,6 @@ interface Slide {
 
 const permanentSlide: Slide = {
   image: "/hero-banner.png",
-  mobileImage: "/hero-banner.png",
   tagline: "",
   title: "",
   subtitle: "",
@@ -50,7 +49,6 @@ export default function HeroCarousel({ promotions = [], freeDeliveryThreshold = 
     permanentSlide,
     ...promotions.map((promo) => ({
       image: promo.imageUrl,
-      mobileImage: promo.imageUrl,
       tagline: promo.subtitle || "Limited Time Offer",
       title: promo.title,
       subtitle: promo.subtitle || "Shop the custom campaign offer today.",
@@ -101,17 +99,15 @@ export default function HeroCarousel({ promotions = [], freeDeliveryThreshold = 
               key={index}
               className="flex-[0_0_100%] min-w-0 relative aspect-[4/3] md:aspect-[21/8] block cursor-pointer group/slide"
             >
-              {/* Desktop Image */}
-              <img
+              <Image
                 src={slide.image}
                 alt=""
-                className={`hidden md:block absolute inset-0 w-full h-full object-cover ${index === 0 ? "" : "brightness-[0.6]"}`}
-              />
-              {/* Mobile Image */}
-              <img
-                src={slide.mobileImage}
-                alt=""
-                className={`block md:hidden absolute inset-0 w-full h-full object-cover ${index === 0 ? "" : "brightness-[0.55]"}`}
+                fill
+                preload={index === 0}
+                fetchPriority={index === 0 ? "high" : "auto"}
+                loading={index === 0 ? "eager" : "lazy"}
+                sizes="100vw"
+                className={`object-cover ${index === 0 ? "" : "brightness-[0.55] md:brightness-[0.6]"}`}
               />
 
               {/* Text Content overlaying the slide */}

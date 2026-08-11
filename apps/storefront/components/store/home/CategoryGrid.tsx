@@ -3,6 +3,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 
 export interface CategoryItem {
   id: string;
@@ -93,9 +94,11 @@ export default function CategoryGrid({ title, subtitle, categories, columns }: C
                     isScrollable ? "rounded-full" : "rounded-[var(--radius-lg)]"
                   }`}
                 >
-                  <img
+                  <Image
                     src={cat.image}
                     alt={cat.title}
+                    fill
+                    sizes={isScrollable ? "105px" : "(min-width: 768px) 12vw, (min-width: 640px) 16vw, 33vw"}
                     className="w-full h-full object-cover transition-transform duration-300 ease-out-expo group-hover:scale-[1.06]"
                     loading="lazy"
                   />

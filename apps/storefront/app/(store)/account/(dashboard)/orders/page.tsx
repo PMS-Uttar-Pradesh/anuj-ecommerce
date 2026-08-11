@@ -8,6 +8,7 @@ import { requireAuth } from "@/lib/auth/require-auth";
 import prisma from "@/lib/prisma";
 import { Package, ShoppingBag, ArrowRight, CreditCard } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { PLACEHOLDER_IMAGE } from "@/lib/utils";
 import CancelOrderButton from "@/components/store/orders/CancelOrderButton";
 
@@ -128,9 +129,11 @@ export default async function OrdersPage() {
 
                     return (
                       <div key={item.id} className="flex gap-4 py-4.5 first:pt-0 last:pb-0">
-                        <img
+                        <Image
                           src={primaryImage}
                           alt={item.product.name}
+                          width={56}
+                          height={56}
                           className="w-14 h-14 object-cover rounded-xl border border-[var(--ag-gray-200)] dark:border-neutral-800 bg-[var(--ag-gray-100)] dark:bg-neutral-800 shrink-0"
                         />
                         <div className="flex-1 min-w-0">

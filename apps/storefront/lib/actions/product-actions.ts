@@ -66,7 +66,7 @@ export async function getProductsByCategory(categorySlug: string) {
   }
 }
 
-export async function getFeaturedProducts() {
+export async function getFeaturedProducts(limit?: number) {
   try {
     return await prisma.product.findMany({
       where: {
@@ -81,6 +81,7 @@ export async function getFeaturedProducts() {
       orderBy: {
         createdAt: "desc",
       },
+      ...(limit ? { take: limit } : {}),
     });
   } catch (error) {
     console.error("Error fetching featured products:", error);
@@ -208,4 +209,3 @@ export async function getMegaMenuCategories() {
     return [];
   }
 }
-

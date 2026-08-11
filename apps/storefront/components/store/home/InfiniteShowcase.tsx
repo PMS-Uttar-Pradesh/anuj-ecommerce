@@ -9,6 +9,7 @@ import {
   MotionValue,
 } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -247,7 +248,7 @@ function FloatingPiece({
     >
       {/* Idle float — nested so it doesn't fight the parallax y */}
       <motion.div
-        className="w-full h-full"
+        className="relative w-full h-full"
         animate={{ y: [0, -p.floatY, 0] }}
         transition={{
           duration: p.floatT,
@@ -257,9 +258,11 @@ function FloatingPiece({
           repeatType: "loop",
         }}
       >
-        <img
+        <Image
           src={p.image}
           alt={p.alt}
+          fill
+          sizes={`(max-width: 640px) ${Math.round(p.w * 0.6)}px, ${p.w}px`}
           loading="lazy"
           className="w-full h-full object-cover select-none"
           style={{

@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 
 interface PromoCard {
@@ -58,9 +59,11 @@ export default function PromoCards() {
               className="relative w-full aspect-[4/3] md:aspect-[3/4] lg:aspect-[4/3] rounded-[var(--radius-lg)] overflow-hidden bg-[var(--ag-gray-800)] group shadow-md"
             >
               {/* Background Image */}
-              <img
+              <Image
                 src={card.image}
                 alt=""
+                fill
+                sizes="(min-width: 768px) 33vw, 100vw"
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-1.04"
                 loading="lazy"
               />

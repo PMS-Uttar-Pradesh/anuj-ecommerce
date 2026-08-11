@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useCartStore } from "@/lib/store/cart-store";
+import { PLACEHOLDER_IMAGE } from "@/lib/utils";
 import {
   Minus,
   Plus,
@@ -190,9 +192,11 @@ export default function CartClient({ freeDeliveryThreshold }: CartClientProps) {
                       className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0"
                       style={{ background: "#F9F6F3" }}
                     >
-                      <img
-                        src={item.image}
+                      <Image
+                        src={item.image || PLACEHOLDER_IMAGE}
                         alt={item.name}
+                        width={96}
+                        height={96}
                         className="w-full h-full object-cover"
                       />
                     </div>

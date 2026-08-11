@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -10,9 +11,11 @@ export default function Footer() {
         {/* Column 1: Brand */}
         <div className="lg:col-span-5 flex flex-col gap-6">
           <Link href="/" className="flex items-center gap-2.5 w-fit group">
-            <img
+            <Image
               src="/logo.jpg"
               alt="Personal Marketing Store Logo"
+              width={112}
+              height={56}
               className="h-14 w-auto object-contain opacity-90 group-hover:opacity-100 transition-opacity"
             />
             <div className="flex flex-col">

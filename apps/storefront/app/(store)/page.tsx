@@ -5,27 +5,47 @@ import CategoryGrid from "@/components/store/home/CategoryGrid";
 import ProductCarousel from "@/components/store/home/ProductCarousel";
 import PromoCards from "@/components/store/home/PromoCards";
 import BudgetSection from "@/components/store/home/BudgetSection";
-import InfiniteShowcase from "@/components/store/home/InfiniteShowcase";
-import { getCategories } from "@/lib/actions/product-actions";
+import dynamic from "next/dynamic";
+import { getCategories, getFeaturedProducts, getNewArrivals, getTrendingProducts } from "@/lib/actions/product-actions";
 import prisma from "@/lib/prisma";
 import { getStoreSettings } from "@/lib/actions/settings";
+
+const InfiniteShowcase = dynamic(() => import("@/components/store/home/InfiniteShowcase"), {
+  loading: () => <section className="h-[640px] bg-[#0F0F10]" aria-label="Creator's workspace" />,
+});
 
 export default async function Home() {
   const currentDate = new Date();
   
-  const [categories, activePromotions] = await Promise.all([
+  const [
+    categories,
+    activePromotions,
+    settings,
+    featuredProducts,
+    trendingProducts,
+    newArrivalProducts,
+  ] = await Promise.all([
     getCategories(),
-    prisma.promotion.findMany({
-      where: {
-        isActive: true,
-        isDeleted: false,
-        startDate: { lte: currentDate },
-        endDate: { gte: currentDate },
-      },
-      orderBy: {
-        displayOrder: "asc",
-      },
-    }),
+    prisma.promotion
+      .findMany({
+        where: {
+          isActive: true,
+          isDeleted: false,
+          startDate: { lte: currentDate },
+          endDate: { gte: currentDate },
+        },
+        orderBy: {
+          displayOrder: "asc",
+        },
+      })
+      .catch((error) => {
+        console.error("Error fetching active promotions:", error);
+        return [];
+      }),
+    getStoreSettings(),
+    getFeaturedProducts(8),
+    getTrendingProducts(6),
+    getNewArrivals(6),
   ]);
 
   const mappedCategories = categories.map((cat) => ({
@@ -36,38 +56,46 @@ export default async function Home() {
   }));
 
   // Map promotions to fetch target slugs
-  const promotionsWithSlugs = await Promise.all(
-    activePromotions.map(async (promo) => {
-      let slug = "";
-      if (promo.redirectType === "PRODUCT") {
-        const prod = await prisma.product.findUnique({
-          where: { id: promo.redirectId },
-          select: { slug: true },
-        });
-        slug = prod?.slug || "";
-      } else if (promo.redirectType === "CATEGORY") {
-        const cat = await prisma.category.findUnique({
-          where: { id: promo.redirectId },
-          select: { slug: true },
-        });
-        slug = cat?.slug || "";
-      }
-      return {
-        id: promo.id,
-        title: promo.title,
-        subtitle: promo.subtitle || "",
-        imageUrl: promo.imageUrl,
-        buttonText: promo.buttonText,
-        redirectType: promo.redirectType,
-        slug,
-      };
-    })
-  );
+  const productRedirectIds = activePromotions
+    .filter((promo) => promo.redirectType === "PRODUCT")
+    .map((promo) => promo.redirectId);
+  const categoryRedirectIds = activePromotions
+    .filter((promo) => promo.redirectType === "CATEGORY")
+    .map((promo) => promo.redirectId);
+
+  const [promotionProducts, promotionCategories] = await Promise.all([
+    productRedirectIds.length
+      ? prisma.product.findMany({
+          where: { id: { in: productRedirectIds } },
+          select: { id: true, slug: true },
+        })
+      : [],
+    categoryRedirectIds.length
+      ? prisma.category.findMany({
+          where: { id: { in: categoryRedirectIds } },
+          select: { id: true, slug: true },
+        })
+      : [],
+  ]);
+
+  const productSlugById = new Map(promotionProducts.map((product) => [product.id, product.slug]));
+  const categorySlugById = new Map(promotionCategories.map((category) => [category.id, category.slug]));
+
+  const promotionsWithSlugs = activePromotions.map((promo) => ({
+    id: promo.id,
+    title: promo.title,
+    subtitle: promo.subtitle || "",
+    imageUrl: promo.imageUrl,
+    buttonText: promo.buttonText,
+    redirectType: promo.redirectType,
+    slug:
+      promo.redirectType === "PRODUCT"
+        ? productSlugById.get(promo.redirectId) || ""
+        : categorySlugById.get(promo.redirectId) || "",
+  }));
 
   // Render a responsive grid of 9 columns if few categories, otherwise a scrollable 18-column track
   const columns = mappedCategories.length > 9 ? 18 : 9;
-
-  const settings = await getStoreSettings();
 
   return (
     <div className="flex flex-col">
@@ -91,6 +119,7 @@ export default async function Home() {
         subtitle="Most loved and highly rated tools from our premium collection."
         collectionId="featured"
         limit={8}
+        initialProducts={featuredProducts}
       />
 
       {/* 6. Trending This Week */}
@@ -99,6 +128,7 @@ export default async function Home() {
         subtitle="Popular stationery items flying off the shelves."
         collectionId="trending"
         limit={6}
+        initialProducts={trendingProducts}
       />
 
       {/* 7. New Arrivals */}
@@ -107,6 +137,7 @@ export default async function Home() {
         subtitle="Fresh additions to our writing, office, and celebration catalogs."
         collectionId="new-arrivals"
         limit={6}
+        initialProducts={newArrivalProducts}
       />
 
       {/* 8. Offers & Deals */}
