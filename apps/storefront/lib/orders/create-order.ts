@@ -15,99 +15,79 @@ interface CreateOrderParams {
 }
 
 export async function createOrderFromCart(params: CreateOrderParams) {
-  return prisma.$transaction(async (tx) => {
-    if (params.razorpayPaymentId) {
-      const existingOrder = await tx.order.findUnique({
-        where: {
-          razorpayPaymentId: params.razorpayPaymentId,
-        },
-        select: {
-          id: true,
-          orderNumber: true,
-        },
-      });
+  // 1) Dedup: if a razorpayPaymentId is provided, check for existing order BEFORE entering transaction
+  if (params.razorpayPaymentId) {
+    const existingOrder = await prisma.order.findUnique({
+      where: { razorpayPaymentId: params.razorpayPaymentId },
+      select: { id: true, orderNumber: true },
+    });
+    if (existingOrder) return existingOrder;
+  }
 
-      if (existingOrder) {
-        return existingOrder;
-      }
-    }
-
-    const cart = await tx.cart.findUnique({
-      where: {
-        userId: params.userId,
-      },
-      include: {
-        items: {
-          include: {
-            product: {
-              include: {
-                variants: true,
-              },
-            },
-            variant: true,
+  // 2) Fetch cart and related product/variant info outside the transaction to reduce time inside tx
+  const cart = await prisma.cart.findUnique({
+    where: { userId: params.userId },
+    include: {
+      items: {
+        include: {
+          product: {
+            include: { variants: true },
           },
+          variant: true,
         },
       },
-    });
+    },
+  });
 
-    if (!cart || cart.items.length === 0) {
-      throw new Error("Cart is empty.");
+  if (!cart || cart.items.length === 0) {
+    throw new Error("Cart is empty.");
+  }
+
+  // 3) Build orderItems and perform initial validations (prices, variant presence, basic stock check)
+  const orderItems = cart.items.map((item) => {
+    const price =
+      item.product.salePrice !== null && item.product.salePrice !== undefined
+        ? item.product.salePrice
+        : item.variant?.price ?? item.product.price;
+
+    if (!Number.isFinite(price) || price <= 0) {
+      throw new Error(`Invalid price for ${item.product.name}`);
     }
 
-    const orderItems = cart.items.map((item) => {
-      const price =
-        item.product.salePrice !== null && item.product.salePrice !== undefined
-          ? item.product.salePrice
-          : item.variant?.price ?? item.product.price;
+    const defaultVariant = item.variant || item.product.variants[0];
+    if (!defaultVariant) {
+      throw new Error(`Variant not found for product ${item.product.name}`);
+    }
 
-      if (!Number.isFinite(price) || price <= 0) {
-        throw new Error(`Invalid price for ${item.product.name}`);
-      }
+    if (item.quantity > defaultVariant.stock) {
+      // basic pre-check; final atomic decrement will enforce this as well
+      throw new Error(`Insufficient stock for ${item.product.name}`);
+    }
 
-      const defaultVariant = item.variant || item.product.variants[0];
-      if (!defaultVariant) {
-        throw new Error(`Variant not found for product ${item.product.name}`);
-      }
+    return {
+      productId: item.productId,
+      variantId: item.variantId || defaultVariant.id,
+      quantity: item.quantity,
+      price,
+    };
+  });
 
-      if (item.quantity > defaultVariant.stock) {
-        throw new Error(`Insufficient stock for ${item.product.name}`);
-      }
+  // 4) Short transaction: attempt atomic stock decrements and create the order + items, then clear cart
+  return prisma.$transaction(async (tx) => {
+    // Atomic decrement: for each variant, use updateMany with a >= where clause and check count
+    for (const it of orderItems) {
+      const targetVariantId = it.variantId;
+      if (!targetVariantId) throw new Error("Variant ID missing for stock decrement.");
 
-      return {
-        productId: item.productId,
-        variantId: item.variantId || defaultVariant.id,
-        quantity: item.quantity,
-        price,
-      };
-    });
-
-    for (const item of orderItems) {
-      const targetVariantId = item.variantId;
-      if (!targetVariantId) {
-        throw new Error("Variant ID missing for stock decrement.");
-      }
-
-      const variant = await tx.productVariant.findUnique({
-        where: { id: targetVariantId },
-        select: { stock: true },
+      const result = await tx.productVariant.updateMany({
+        where: { id: targetVariantId, stock: { gte: it.quantity } },
+        data: { stock: { decrement: it.quantity } },
       });
 
-      if (!variant) {
-        throw new Error("Variant not found for stock decrement.");
-      }
-
-      if (variant.stock < item.quantity) {
+      if (result.count !== 1) {
+        // If update didn't affect exactly one row, roll back by throwing
         throw new Error("Insufficient stock for variant.");
       }
-
-      await tx.productVariant.update({
-        where: { id: targetVariantId },
-        data: {
-          stock: {
-            decrement: item.quantity,
-          },
-        },
-      });
     }
 
     const totalAmount = params.subtotal - params.discountAmount + params.shippingFee;
@@ -129,17 +109,11 @@ export async function createOrderFromCart(params: CreateOrderParams) {
           create: orderItems,
         },
       },
-      select: {
-        id: true,
-        orderNumber: true,
-      },
+      select: { id: true, orderNumber: true },
     });
 
-    await tx.cartItem.deleteMany({
-      where: {
-        cartId: cart.id,
-      },
-    });
+    // Clear cart items
+    await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
 
     return order;
   });

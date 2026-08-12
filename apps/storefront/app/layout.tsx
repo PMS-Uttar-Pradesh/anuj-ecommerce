@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-
+import ThemeInitializer from "@/components/ThemeInitializer";
 export const metadata: Metadata = {
   title: "Personal Marketing Store — Pens, Stationery & Art Supplies",
   description:
@@ -16,29 +16,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var theme = localStorage.getItem('theme');
-                  var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                  var shouldUseDark = theme === 'dark' || theme === 'system' && systemDark || !theme && systemDark;
-                  if (shouldUseDark) {
-                    document.documentElement.classList.add('dark');
-                    document.documentElement.style.colorScheme = 'dark';
-                  } else {
-                    document.documentElement.classList.remove('dark');
-                    document.documentElement.style.colorScheme = 'light';
-                  }
-                } catch (e) {}
-              })();
-            `,
-          }}
-        />
-      </head>
+      <head />
       <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-200">
+        <ThemeInitializer />
         {children}
         <Toaster />
       </body>

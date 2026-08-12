@@ -69,22 +69,68 @@ export default function AuthProvider({
       const cartStore = useCartStore.getState();
       if (isAuthenticated) {
         try {
-          const guestCartItems = cartStore.items;
-          const currentUserId = useAuthStore.getState().user?.id;
+          const currentUserId = useAuthStore.getState().user?.id || null;
 
+          // If the store thinks the cart belongs to a different user, reconcile
           if (cartStore.userId !== currentUserId) {
-            let finalItems;
+            // Capture a snapshot of local cart for merge and the current localVersion
+            const guestCartItems = cartStore.items;
+            const snapshotVersion = useCartStore.getState().localVersion || 0;
+
             if (cartStore.userId === null) {
-              finalItems = await mergeCartAction(guestCartItems);
+              // Guest -> user: merge guest cart into DB
+              try {
+                const merged = await mergeCartAction(guestCartItems);
+                const currentVersion = useCartStore.getState().localVersion || 0;
+                // Only apply DB authoritative result if no newer local change happened during merge
+                if (currentVersion === snapshotVersion) {
+                  cartStore.setCartItems(merged);
+                } else {
+                  // Newer local changes exist; request a sync to persist latest to DB
+                  await cartStore.requestSync();
+                }
+                cartStore.setUserId(currentUserId);
+              } catch (err) {
+                console.error("[AuthProvider] mergeCartAction failed:", err);
+                // Do not overwrite local cart on merge failure; set userId so UX reflects authentication state
+                cartStore.setUserId(currentUserId);
+                // Optionally try to push local state
+                await cartStore.requestSync().catch(() => {});
+              }
             } else {
-              finalItems = await fetchDbCart();
+              // The cart in store belonged to another user (rare). Fetch server cart, but don't overwrite newer local changes.
+              try {
+                const snapshot = useCartStore.getState().localVersion || 0;
+                const dbItems = await fetchDbCart();
+                const currentVersion = useCartStore.getState().localVersion || 0;
+                if (currentVersion === snapshot) {
+                  cartStore.setCartItems(dbItems);
+                } else {
+                  // Local changes exist; ensure they are synced to DB
+                  await cartStore.requestSync();
+                }
+                cartStore.setUserId(currentUserId);
+              } catch (err) {
+                console.error("[AuthProvider] fetchDbCart failed:", err);
+                // don't clear or overwrite local cart on error
+                cartStore.setUserId(currentUserId);
+              }
             }
-            cartStore.setCartItems(finalItems);
-            cartStore.setUserId(currentUserId || null);
           } else {
-            // Just refresh from DB to make sure we are in sync
-            const dbItems = await fetchDbCart();
-            cartStore.setCartItems(dbItems);
+            // Same user; optionally refresh DB state but avoid overwriting newer local changes
+            try {
+              const snapshot = useCartStore.getState().localVersion || 0;
+              const dbItems = await fetchDbCart();
+              const currentVersion = useCartStore.getState().localVersion || 0;
+              if (currentVersion === snapshot) {
+                cartStore.setCartItems(dbItems);
+              } else {
+                // don't overwrite; ensure current state persisted
+                await cartStore.requestSync();
+              }
+            } catch (err) {
+              console.error("[AuthProvider] refresh fetchDbCart failed:", err);
+            }
           }
         } catch (err) {
           console.error("[AuthProvider] Data sync failed:", err);

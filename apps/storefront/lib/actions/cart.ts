@@ -43,6 +43,7 @@ export async function fetchDbCart(): Promise<ZustandCartItem[]> {
                 variants: { take: 1 },
               },
             },
+            variant: true,
           },
         },
       },
@@ -56,10 +57,12 @@ export async function fetchDbCart(): Promise<ZustandCartItem[]> {
         item.product.images.find(() => true)?.url ||
         PLACEHOLDER_IMAGE;
 
-      const stock = item.product.variants[0]?.stock ?? 0;
-      const activePrice = item.product.salePrice !== null && item.product.salePrice !== undefined 
-        ? item.product.salePrice 
-        : item.product.price;
+      // Prefer the exact variant from the CartItem if present; otherwise fall back to product variants[0]
+      const variant = item.variant || item.product.variants[0];
+      const stock = variant?.stock ?? 0;
+      const activePrice = item.product.salePrice !== null && item.product.salePrice !== undefined
+        ? item.product.salePrice
+        : variant?.price ?? item.product.price;
 
       return {
         id: item.productId,
@@ -72,7 +75,8 @@ export async function fetchDbCart(): Promise<ZustandCartItem[]> {
     });
   } catch (error) {
     console.error("[fetchDbCart] Failed to fetch cart:", error);
-    return [];
+    // Important: bubble up error so callers can distinguish 'empty cart' vs 'fetch failed'
+    throw error;
   }
 }
 
@@ -81,69 +85,68 @@ export async function syncCartAction(items: ZustandCartItem[]): Promise<ZustandC
   const user = await getAuthUser();
   if (!user) return items;
 
+  // Normalize and validate incoming items
+  const validItems = items
+    .filter((item) => item && typeof item.id === "string" && item.id.trim())
+    .map((item) => ({ ...item, id: item.id.trim() }))
+    .filter((item) => {
+      if (typeof item.quantity !== "number" || !Number.isInteger(item.quantity) || item.quantity <= 0 || item.quantity > 100) {
+        console.warn("[syncCartAction] Skipping invalid quantity item:", item);
+        return false;
+      }
+      return true;
+    });
+
   try {
     // 1. Get or create Cart
-    let cart = await prisma.cart.findUnique({
-      where: { userId: user.id },
-    });
-
+    let cart = await prisma.cart.findUnique({ where: { userId: user.id } });
     if (!cart) {
-      cart = await prisma.cart.create({
-        data: { userId: user.id },
-      });
+      cart = await prisma.cart.create({ data: { userId: user.id } });
     }
 
-    // 2. Perform synchronization
-    // Upsert items from frontend
-    for (const item of items) {
-      if (!item || typeof item.id !== "string" || !item.id.trim()) continue;
-      if (typeof item.quantity !== "number" || !Number.isInteger(item.quantity) || item.quantity <= 0 || item.quantity > 100) {
-        continue;
-      }
-      const productId = item.id.trim();
-      const quantity = item.quantity;
+    // 2. Fetch existing cart items for this cart in a single query
+    const existingItems = await prisma.cartItem.findMany({ where: { cartId: cart.id } });
+    const existingByProduct: Record<string, typeof existingItems[0]> = {};
+    for (const e of existingItems) {
+      existingByProduct[e.productId] = e;
+    }
 
-      const existingItem = await prisma.cartItem.findFirst({
-        where: {
-          cartId: cart.id,
-          productId: productId,
-          variantId: null,
-        },
-      });
+    // 3. Prepare createMany payload and update operations
+    const toCreate: Array<{ cartId: string; productId: string; variantId: string | null; quantity: number }> = [];
+    const toUpdate: Array<{ id: string; quantity: number }> = [];
 
-      if (existingItem) {
-        await prisma.cartItem.update({
-          where: { id: existingItem.id },
-          data: {
-            quantity: quantity,
-          },
-        });
+    for (const item of validItems) {
+      const existing = existingByProduct[item.id];
+      if (existing) {
+        if (existing.quantity !== item.quantity) {
+          toUpdate.push({ id: existing.id, quantity: item.quantity });
+        }
       } else {
-        await prisma.cartItem.create({
-          data: {
-            cartId: cart.id,
-            productId: productId,
-            variantId: null,
-            quantity: quantity,
-          },
-        });
+        toCreate.push({ cartId: cart.id, productId: item.id, variantId: null, quantity: item.quantity });
       }
     }
 
-    // Delete items not present in frontend array
-    const frontendProductIds = items.map((i) => i.id);
-    await prisma.cartItem.deleteMany({
-      where: {
-        cartId: cart.id,
-        productId: { notIn: frontendProductIds },
-      },
-    });
+    // 4. Execute updates and creates (minimize round-trips)
+    // Updates: perform individual updates (still faster than findFirst per item)
+    await Promise.all(
+      toUpdate.map((u) => prisma.cartItem.update({ where: { id: u.id }, data: { quantity: u.quantity } }))
+    );
 
-    // 3. Return refreshed list
-    return fetchDbCart();
+    // Creates: use createMany for bulk insert
+    if (toCreate.length > 0) {
+      await prisma.cartItem.createMany({ data: toCreate });
+    }
+
+    // 5. Deletes: remove items not present in frontend
+    const frontendProductIds = validItems.map((i) => i.id);
+    await prisma.cartItem.deleteMany({ where: { cartId: cart.id, productId: { notIn: frontendProductIds } } });
+
+    // 6. Return refreshed list (throw on failure to let caller decide)
+    return await fetchDbCart();
   } catch (error) {
     console.error("[syncCartAction] Failed to sync cart:", error);
-    return items;
+    // Bubble up so caller (store / auth provider) can decide what to do; do NOT return empty cart on DB failure
+    throw error;
   }
 }
 
@@ -152,61 +155,51 @@ export async function mergeCartAction(guestItems: ZustandCartItem[]): Promise<Zu
   const user = await getAuthUser();
   if (!user) return guestItems;
 
-  try {
-    // Get or create Cart
-    let cart = await prisma.cart.findUnique({
-      where: { userId: user.id },
+  // Normalize guest items
+  const validGuest = guestItems
+    .filter((it) => it && typeof it.id === "string" && it.id.trim())
+    .map((it) => ({ ...it, id: it.id.trim() }))
+    .filter((it) => {
+      if (typeof it.quantity !== "number" || !Number.isInteger(it.quantity) || it.quantity <= 0 || it.quantity > 100) {
+        console.warn("[mergeCartAction] Skipping invalid guest item:", it);
+        return false;
+      }
+      return true;
     });
 
+  try {
+    // Get or create Cart
+    let cart = await prisma.cart.findUnique({ where: { userId: user.id } });
     if (!cart) {
-      cart = await prisma.cart.create({
-        data: { userId: user.id },
-      });
+      cart = await prisma.cart.create({ data: { userId: user.id } });
     }
 
-    // Merge logic
-    for (const guestItem of guestItems) {
-      if (!guestItem || typeof guestItem.id !== "string" || !guestItem.id.trim()) continue;
-      if (typeof guestItem.quantity !== "number" || !Number.isInteger(guestItem.quantity) || guestItem.quantity <= 0 || guestItem.quantity > 100) {
-        continue;
-      }
-      const productId = guestItem.id.trim();
-      const quantity = guestItem.quantity;
+    // Fetch existing cart items once
+    const existingItems = await prisma.cartItem.findMany({ where: { cartId: cart.id } });
+    const existingByProduct: Record<string, typeof existingItems[0]> = {};
+    for (const e of existingItems) existingByProduct[e.productId] = e;
 
-      const existingDbItem = await prisma.cartItem.findFirst({
-        where: {
-          cartId: cart.id,
-          productId: productId,
-          variantId: null,
-        },
-      });
+    const toCreate: Array<{ cartId: string; productId: string; variantId: string | null; quantity: number }> = [];
+    const toUpdate: Array<{ id: string; quantity: number }> = [];
 
-      if (existingDbItem) {
-        // Combine quantities, with a safety cap at 100
-        const newQuantity = Math.min(existingDbItem.quantity + quantity, 100);
-        await prisma.cartItem.update({
-          where: { id: existingDbItem.id },
-          data: {
-            quantity: newQuantity,
-          },
-        });
+    for (const guestItem of validGuest) {
+      const existing = existingByProduct[guestItem.id];
+      if (existing) {
+        const newQty = Math.min(existing.quantity + guestItem.quantity, 100);
+        if (newQty !== existing.quantity) {
+          toUpdate.push({ id: existing.id, quantity: newQty });
+        }
       } else {
-        // Create new item
-        await prisma.cartItem.create({
-          data: {
-            cartId: cart.id,
-            productId: productId,
-            variantId: null,
-            quantity: quantity,
-          },
-        });
+        toCreate.push({ cartId: cart.id, productId: guestItem.id, variantId: null, quantity: guestItem.quantity });
       }
     }
 
-    // Return the final merged cart from DB
-    return fetchDbCart();
+    await Promise.all(toUpdate.map((u) => prisma.cartItem.update({ where: { id: u.id }, data: { quantity: u.quantity } })));
+    if (toCreate.length > 0) await prisma.cartItem.createMany({ data: toCreate });
+
+    return await fetchDbCart();
   } catch (error) {
     console.error("[mergeCartAction] Failed to merge cart:", error);
-    return guestItems;
+    throw error;
   }
 }
