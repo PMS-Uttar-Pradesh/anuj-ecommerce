@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     "India's premium wholesale stationery store. Shop pens, notebooks, planners, art supplies & more. COD available above ₹500.",
   keywords: ["stationery", "pens", "notebooks", "art supplies", "wholesale"],
   icons: {
-    icon: "/icon.png",
+    icon: "/icon.png?v=2",
   },
 };
 
