@@ -1,6 +1,6 @@
 # PMS Stationery Storefront
 
-This is the main application repository for KAPI Pen & Stationery — a fully built storefront and admin system for a stationery business.
+This is the main application repository for PMS Stationery — a fully built storefront and admin system for a stationery business.
 
 The project is implemented as a production-style Next.js e-commerce application with a customer shopping experience, authenticated checkout flow, and a private business dashboard for operations and reporting.
 
