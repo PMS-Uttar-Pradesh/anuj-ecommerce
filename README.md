@@ -1,6 +1,6 @@
-# KAPI Pen & Stationery
+# PMS Stationery
 
-KAPI is a complete e-commerce and admin management platform for a stationery retail business. The project combines a customer-facing storefront with a protected business dashboard, making it suitable for a real-world store that needs both sales and operations management in one system.
+PMS is a complete e-commerce and admin management platform for a stationery retail business. The project combines a customer-facing storefront with a protected business dashboard, making it suitable for a real-world store that needs both sales and operations management in one system.
 
 This repository is designed to be easy for a future developer to understand, run locally, and deploy without confusion.
 
@@ -10,7 +10,7 @@ This project is complete and ready for local development, demoing, staging, and 
 
 ## Business overview
 
-KAPI serves as a modern online store for pens, stationery, office essentials, and creative/art supplies. It is built to support:
+PMS serves as a modern online store for pens, stationery, office essentials, and creative/art supplies. It is built to support:
 
 - browsing products by category and collection
 - product detail exploration with variants and stock visibility
@@ -446,4 +446,4 @@ The codebase is intended to be a clean starting point for future development, wi
 
 ## License
 
-This project is intended for the KAPI Pen & Stationery business and is meant for internal operational use, deployment, and future maintenance under the project owner’s direction.
+This project is intended for the PMS Stationery business and is meant for internal operational use, deployment, and future maintenance under the project owner’s direction.
