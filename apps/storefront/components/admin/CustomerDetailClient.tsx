@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { ArrowLeft, Mail, MapPin, Calendar, ShoppingBag, ExternalLink, User } from "lucide-react";
+import { ArrowLeft, Mail, MapPin, Calendar, ShoppingBag, ExternalLink, User, Phone } from "lucide-react";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import AdminRefreshButton from "@/components/admin/AdminRefreshButton";
 
@@ -42,7 +42,9 @@ interface CustomerDetail {
   createdAt: Date | string;
   addresses: Address[];
   orders: Order[];
+  phone: string | null;
 }
+
 
 interface CustomerDetailClientProps {
   customer: CustomerDetail;
@@ -108,6 +110,14 @@ export default function CustomerDetailClient({ customer }: CustomerDetailClientP
               </span>
               <span className="font-semibold text-zinc-800 dark:text-zinc-200 select-all">
                 {customer.email}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-zinc-500 flex items-center gap-1.5">
+                <Phone className="size-3.5" /> Mobile
+              </span>
+              <span className="font-semibold text-zinc-800 dark:text-zinc-200 select-all">
+                {customer.phone ? `+91 ${customer.phone}` : "Not provided"}
               </span>
             </div>
             <div className="flex items-center justify-between">

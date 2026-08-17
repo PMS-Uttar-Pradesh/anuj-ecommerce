@@ -1,8 +1,13 @@
 export const runtime = "nodejs";
+
 import { createHmac, timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { OrderStatus, PaymentStatus, PaymentMethod } from "@prisma/client";
+import {
+  OrderStatus,
+  PaymentStatus,
+  PaymentMethod,
+} from "@prisma/client";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 import { createOrderFromCart } from "@/lib/orders/create-order";
 import { validateCheckout } from "@/lib/checkout/validate-checkout";
@@ -11,6 +16,8 @@ interface VerifyPaymentPayload {
   razorpay_order_id: string;
   razorpay_payment_id: string;
   razorpay_signature: string;
+  mobile: string;
+  deliveryMethod?: string;
 }
 
 class PaymentVerificationError extends Error {
@@ -38,7 +45,9 @@ function isVerifyPaymentPayload(
     typeof payload.razorpay_payment_id === "string" &&
     payload.razorpay_payment_id.trim().length > 0 &&
     typeof payload.razorpay_signature === "string" &&
-    payload.razorpay_signature.trim().length > 0
+    payload.razorpay_signature.trim().length > 0 &&
+    typeof payload.mobile === "string" &&
+    /^[6-9]\d{9}$/.test(payload.mobile.trim())
   );
 }
 
@@ -68,6 +77,7 @@ function verifyRazorpaySignature(
       .digest("hex");
 
     const expected = Buffer.from(expectedSignature, "hex");
+
     const received = Buffer.from(
       payload.razorpay_signature,
       "hex"
@@ -88,16 +98,23 @@ function verifyRazorpaySignature(
   }
 }
 
-
 async function createOrderFromVerifiedPayment(
   userId: string,
   payload: VerifyPaymentPayload,
-  deliveryMethod: string
+  deliveryMethod: string,
+  phone: string
 ) {
   try {
-    const checkout = await validateCheckout(userId, deliveryMethod);
+    const checkout = await validateCheckout(
+      userId,
+      deliveryMethod
+    );
+
     if (!checkout.valid) {
-      throw new PaymentVerificationError("Checkout verification failed: " + checkout.errors.join(" "));
+      throw new PaymentVerificationError(
+        "Checkout verification failed: " +
+          checkout.errors.join(" ")
+      );
     }
 
     return await createOrderFromCart({
@@ -105,17 +122,30 @@ async function createOrderFromVerifiedPayment(
       paymentMethod: PaymentMethod.ONLINE,
       paymentStatus: PaymentStatus.COMPLETED,
       status: OrderStatus.PROCESSING,
+
       razorpayOrderId: payload.razorpay_order_id,
       razorpayPaymentId: payload.razorpay_payment_id,
+
       subtotal: checkout.subtotal,
       discountAmount: checkout.discount,
       shippingFee: checkout.shipping,
+
+      // Save customer's mobile number
+      phone,
     });
-  } catch (error: any) {
-    throw new PaymentVerificationError(error.message || "Payment verification failed.");
+  } catch (error: unknown) {
+    if (error instanceof PaymentVerificationError) {
+      throw error;
+    }
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Payment verification failed.";
+
+    throw new PaymentVerificationError(message);
   }
 }
-
 
 export async function POST(request: NextRequest) {
   try {
@@ -130,6 +160,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
+          error: "Authentication required.",
         },
         {
           status: 401,
@@ -137,12 +168,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body: any = await request.json().catch(() => null);
+    const body: unknown = await request
+      .json()
+      .catch(() => null);
 
+    // Validate Razorpay payload + mobile number
     if (!isVerifyPaymentPayload(body)) {
       return NextResponse.json(
         {
           success: false,
+          error: "Invalid payment verification payload.",
         },
         {
           status: 400,
@@ -150,12 +185,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const isValidSignature = verifyRazorpaySignature(body);
+    // Verify Razorpay payment signature
+    const isValidSignature =
+      verifyRazorpaySignature(body);
 
     if (!isValidSignature) {
       return NextResponse.json(
         {
           success: false,
+          error: "Invalid payment signature.",
         },
         {
           status: 400,
@@ -163,10 +201,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const deliveryMethod = (body as any).deliveryMethod || "standard";
-    const order = await createOrderFromVerifiedPayment(user.id, body, deliveryMethod);
+    const deliveryMethod =
+      typeof body.deliveryMethod === "string"
+        ? body.deliveryMethod
+        : "standard";
 
-    await sendOrderConfirmationEmail({ orderId: order.id });
+    const order =
+      await createOrderFromVerifiedPayment(
+        user.id,
+        body,
+        deliveryMethod,
+        body.mobile
+      );
+
+    await sendOrderConfirmationEmail({
+      orderId: order.id,
+    });
 
     return NextResponse.json({
       success: true,
@@ -179,6 +229,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
+          error: error.message,
         },
         {
           status: error.status,
@@ -194,6 +245,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
+        error: "Payment verification failed.",
       },
       {
         status: 500,

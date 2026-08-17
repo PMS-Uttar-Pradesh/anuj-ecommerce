@@ -288,7 +288,7 @@ export default function CheckoutClient({ freeDeliveryThreshold }: CheckoutClient
     if (paymentMethod === "COD") {
       setLoading(true);
       try {
-        const res = await createCodOrderAction(deliveryMethod);
+        const res = await createCodOrderAction(deliveryMethod,contact.mobile);
         if (res.success) {
           // Clear cart items in store
           useCartStore.setState({ items: [] });
@@ -376,6 +376,7 @@ export default function CheckoutClient({ freeDeliveryThreshold }: CheckoutClient
               body: JSON.stringify({
                 ...payload,
                 deliveryMethod,
+                mobile: contact.mobile,
               }),
             });
 

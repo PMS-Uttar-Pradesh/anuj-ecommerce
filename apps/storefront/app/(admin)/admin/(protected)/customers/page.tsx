@@ -16,6 +16,7 @@ export default async function CustomersPage() {
       firstName: true,
       lastName: true,
       createdAt: true,
+      phone:true,
       orders: {
         select: {
           totalAmount: true,

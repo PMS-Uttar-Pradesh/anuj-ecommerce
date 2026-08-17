@@ -12,6 +12,7 @@ interface CreateOrderParams {
   subtotal: number;
   discountAmount: number;
   shippingFee: number;
+  phone?: string | null;
 }
 
 export async function createOrderFromCart(params: CreateOrderParams) {
@@ -76,6 +77,14 @@ export async function createOrderFromCart(params: CreateOrderParams) {
   return prisma.$transaction(async (tx) => {
     // Atomic decrement: for each variant, use updateMany with a >= where clause and check count
     for (const it of orderItems) {
+      if (params.phone) {
+        await tx.user.update({
+          where: { id: params.userId },
+          data: {
+            phone: params.phone,
+          },
+        });
+      }
       const targetVariantId = it.variantId;
       if (!targetVariantId) throw new Error("Variant ID missing for stock decrement.");
 

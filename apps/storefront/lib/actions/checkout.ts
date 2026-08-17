@@ -145,7 +145,10 @@ export async function checkCodEligibility(
 /**
  * Server Action to create a COD order securely.
  */
-export async function createCodOrderAction(deliveryMethod: string = "standard") {
+export async function createCodOrderAction(
+  deliveryMethod: string = "standard",
+  mobile: string
+) {
   try {
     const supabase = await createClient();
     const {
@@ -178,6 +181,7 @@ export async function createCodOrderAction(deliveryMethod: string = "standard") 
       subtotal: checkout.subtotal,
       discountAmount: checkout.discount,
       shippingFee: checkout.shipping,
+      phone: mobile,
     });
 
     await sendOrderConfirmationEmail({ orderId: order.id });

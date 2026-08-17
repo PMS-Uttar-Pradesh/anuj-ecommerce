@@ -15,6 +15,7 @@ model User {
   updatedAt     DateTime           @updatedAt
   firstName     String?
   lastName      String?
+  phone         String?
   role          UserRole           @default(CUSTOMER)
   addresses     Address[]
   activityLogs  AdminActivityLog[]
